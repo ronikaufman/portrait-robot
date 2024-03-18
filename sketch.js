@@ -5,7 +5,7 @@ let faceapi;
 let imgBase;
 let detectionsBase;
 
-let centerLeftEye;
+let centroidLeftEye;
 let radLeftEye;
 
 let imgLeftEye;
@@ -53,6 +53,8 @@ function modelReady() {
     faceapi.detectSingle(imgLeftEye, gotResultsLeftEye);
 }
 
+// BASE
+
 function gotResultsBase(err, result) {
     if (err) {
         console.log(err)
@@ -63,7 +65,7 @@ function gotResultsBase(err, result) {
 
     if (detectionsBase) {
         verticesLeftEye = normalize(detectionsBase.parts.leftEye, width, height);
-        [centerLeftEye, radLeftEye] = analyzeEye(verticesLeftEye);
+        [centroidLeftEye, radLeftEye] = analyzeShape(verticesLeftEye);
     }
 }
 
@@ -81,15 +83,19 @@ function gotResultsLeftEye(err, result) {
     }
 }
 
+// LEFT EYE
+
 function drawLeftEye(vertices) {
-    let [center, rad] = analyzeEye(vertices);
+    let [centroid, rad] = analyzeShape(vertices);
+    let border = rad*2;
 
     let trans = (x, y) => {
-        let xNew = centerLeftEye[0] + radLeftEye*(x-center[0])/rad;
-        let yNew = centerLeftEye[1] + radLeftEye*(y-center[1])/rad;
+        let xNew = centroidLeftEye[0] + radLeftEye*(x-centroid[0])/rad;
+        let yNew = centroidLeftEye[1] + radLeftEye*(y-centroid[1])/rad;
         return [xNew, yNew];
     };
 
+    /*
     fill(255, 0, 0);
     noStroke();
     beginShape();
@@ -98,19 +104,57 @@ function drawLeftEye(vertices) {
         vertex(x*width, y*height);
     })
     endShape(CLOSE);
-    image(imgLeftEye, width*(centerLeftEye[0]-radLeftEye), height*(centerLeftEye[1]-radLeftEye), width*radLeftEye*2, height*radLeftEye*2, imgLeftEye.width*(center[0]-rad), imgLeftEye.height*(center[1]-rad), imgLeftEye.width*rad*2, imgLeftEye.height*rad*2);
+    */
+
+    let myMask = createGraphics(imgLeftEye.width, imgLeftEye.height);
+    myMask.fill(0);
+    myMask.noStroke();
+    myMask.beginShape();
+    vertices.forEach((item) => {
+        let theta = atan2(item[1]-centroid[1], item[0]-centroid[0]);
+        let r = dist(centroid[0], centroid[1], item[0], item[1]);
+        let x = centroid[0] + (r+border)*cos(theta);
+        let y = centroid[1] + (r+border)*sin(theta);
+        myMask.vertex(x*imgLeftEye.width, y*imgLeftEye.height);
+        //console.log(item[0]*imgLeftEye.width, item[1]*imgLeftEye.height);
+        /*
+        fill(0,255,0);
+        noStroke();
+        let [x1, y1] = trans(x, y);
+        circle(x1*width, y1*height, 3);
+        */
+    })
+    myMask.endShape(CLOSE);
+    imgLeftEye.mask(myMask);
+    //image(myMask, 0, 0, width, height, 0, 0, imgLeftEye.width, imgLeftEye.height)
+
+    let dx = width*(centroidLeftEye[0]-radLeftEye-border);
+    let dy = height*(centroidLeftEye[1]-radLeftEye-border);
+    let dWidth = width*(radLeftEye+border)*2;
+    let dHeight = height*(radLeftEye+border)*2;
+    let sx = imgLeftEye.width*(centroid[0]-rad-border);
+    let sy = imgLeftEye.height*(centroid[1]-rad-border);
+    let sWidth = imgLeftEye.width*(rad+border)*2;
+    let sHeight = imgLeftEye.height*(rad+border)*2;
+    drawingContext.shadowOffsetX = 0;
+    drawingContext.shadowOffsetY = 0;
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = "black";
+    image(imgLeftEye, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
     console.log("left eye drawn");
 }
+
+// UTILITIES
 
 function normalize(vertices, w, h) {
     let newVertices = [];
     vertices.forEach(item => {
         newVertices.push([item._x/w, item._y/h]);
     })
-    return newVertices
+    return newVertices;
 }
 
-function analyzeEye(vertices) {
+function analyzeShape(vertices) {
     let cx = 0, cy = 0;
     for (let item of vertices) {
         cx += item[0];
@@ -118,17 +162,20 @@ function analyzeEye(vertices) {
     }
     cx /= vertices.length;
     cy /= vertices.length;
-    let center = [cx, cy];
+    let centroid = [cx, cy];
 
     let maxRad = 0;
+    //let minRad = Infinity;
     for (let item of vertices) {
         let r = dist(cx, cy, item[0], item[1]);
         if (r > maxRad) maxRad = r;
+        //if (r < minRad) minRad = r;
     }
 
-    return [center, maxRad];
+    return [centroid, maxRad];
 }
 
+// TEMPLATE
 
 function gotResults(err, result) {
     if (err) {
