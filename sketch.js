@@ -3,16 +3,16 @@ console.log('ml5 version:', ml5.version);
 let faceapi;
 
 let imgBase;
-let detectionsBase;
+let imgLeftEye;
+let imgRightEye;
 
+let verticesLeftEye;
 let centroidLeftEye;
 let radLeftEye;
 
-let imgLeftEye;
-let detectionsLeftEye;
-
-let imgRightEye;
-let detectionsRightEye;
+let verticesRightEye;
+let centroidRightEye;
+let radRightEye;
 
 // by default all options are set to true
 const detection_options = {
@@ -23,6 +23,7 @@ const detection_options = {
 function preload() {
     imgBase = loadImage("assets/301060.jpg");
     imgLeftEye = loadImage("assets/3555297.jpg");
+    imgRightEye = loadImage("assets/334018.jpg");
     //img = loadImage("https://cdn.jsdelivr.net/gh/ml5js/ml5-examples@release/p5js/FaceApi/FaceApi_Image_Landmarks/assets/frida.jpg");
 }
 
@@ -47,66 +48,67 @@ function draw(){
 
 function modelReady() {
     console.log('ready!');
-    console.log(faceapi);
+    //console.log(faceapi);
 
     faceapi.detectSingle(imgBase, gotResultsBase);
     faceapi.detectSingle(imgLeftEye, gotResultsLeftEye);
+    faceapi.detectSingle(imgRightEye, gotResultsRightEye);
 }
 
 // BASE
 
 function gotResultsBase(err, result) {
     if (err) {
-        console.log(err)
-        return
+        console.log(err);
+        return;
     }
     // console.log(result)
-    detectionsBase = result;
+    let detectionsBase = result;
 
     if (detectionsBase) {
         verticesLeftEye = normalize(detectionsBase.parts.leftEye, width, height);
         [centroidLeftEye, radLeftEye] = analyzeShape(verticesLeftEye);
+
+        verticesRightEye = normalize(detectionsBase.parts.rightEye, width, height);
+        [centroidRightEye, radRightEye] = analyzeShape(verticesRightEye);
     }
 }
+
+// EYES
 
 function gotResultsLeftEye(err, result) {
     if (err) {
-        console.log(err)
-        return
+        console.log(err);
+        return;
     }
     // console.log(result)
-    detectionsLeftEye = result;
+    let detectionsLeftEye = result;
 
     if (detectionsLeftEye) {
         let vertices = normalize(detectionsLeftEye.parts.leftEye, imgLeftEye.width, imgLeftEye.height);
-        drawLeftEye(vertices);
+        drawEye(vertices, imgLeftEye, centroidLeftEye, radLeftEye);
     }
 }
 
-// LEFT EYE
+function gotResultsRightEye(err, result) {
+    if (err) {
+        console.log(err);
+        return;
+    }
+    // console.log(result)
+    let detectionsRightEye = result;
 
-function drawLeftEye(vertices) {
+    if (detectionsRightEye) {
+        let vertices = normalize(detectionsRightEye.parts.rightEye, imgRightEye.width, imgRightEye.height);
+        drawEye(vertices, imgRightEye, centroidRightEye, radRightEye);
+    }
+}
+
+function drawEye(vertices, img, centroidEye, radEye) {
     let [centroid, rad] = analyzeShape(vertices);
-    let border = rad*2;
+    let border = rad*1.5;
 
-    let trans = (x, y) => {
-        let xNew = centroidLeftEye[0] + radLeftEye*(x-centroid[0])/rad;
-        let yNew = centroidLeftEye[1] + radLeftEye*(y-centroid[1])/rad;
-        return [xNew, yNew];
-    };
-
-    /*
-    fill(255, 0, 0);
-    noStroke();
-    beginShape();
-    vertices.forEach(item => {
-        let [x, y] = trans(item[0], item[1]);
-        vertex(x*width, y*height);
-    })
-    endShape(CLOSE);
-    */
-
-    let myMask = createGraphics(imgLeftEye.width, imgLeftEye.height);
+    let myMask = createGraphics(img.width, img.height);
     myMask.fill(0);
     myMask.noStroke();
     myMask.beginShape();
@@ -115,33 +117,26 @@ function drawLeftEye(vertices) {
         let r = dist(centroid[0], centroid[1], item[0], item[1]);
         let x = centroid[0] + (r+border)*cos(theta);
         let y = centroid[1] + (r+border)*sin(theta);
-        myMask.vertex(x*imgLeftEye.width, y*imgLeftEye.height);
-        //console.log(item[0]*imgLeftEye.width, item[1]*imgLeftEye.height);
-        /*
-        fill(0,255,0);
-        noStroke();
-        let [x1, y1] = trans(x, y);
-        circle(x1*width, y1*height, 3);
-        */
+        myMask.vertex(x*img.width, y*img.height);
     })
     myMask.endShape(CLOSE);
-    imgLeftEye.mask(myMask);
-    //image(myMask, 0, 0, width, height, 0, 0, imgLeftEye.width, imgLeftEye.height)
+    //myMask.filter(BLUR, 5);
+    img.mask(myMask);
 
-    let dx = width*(centroidLeftEye[0]-radLeftEye-border);
-    let dy = height*(centroidLeftEye[1]-radLeftEye-border);
-    let dWidth = width*(radLeftEye+border)*2;
-    let dHeight = height*(radLeftEye+border)*2;
-    let sx = imgLeftEye.width*(centroid[0]-rad-border);
-    let sy = imgLeftEye.height*(centroid[1]-rad-border);
-    let sWidth = imgLeftEye.width*(rad+border)*2;
-    let sHeight = imgLeftEye.height*(rad+border)*2;
+    let dx = width*(centroidEye[0]-radEye-border);
+    let dy = height*(centroidEye[1]-radEye-border);
+    let dWidth = width*(radEye+border)*2;
+    let dHeight = height*(radEye+border)*2;
+    let sx = img.width*(centroid[0]-rad-border);
+    let sy = img.height*(centroid[1]-rad-border);
+    let sWidth = img.width*(rad+border)*2;
+    let sHeight = img.height*(rad+border)*2;
     drawingContext.shadowOffsetX = 0;
     drawingContext.shadowOffsetY = 0;
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = "black";
-    image(imgLeftEye, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
-    console.log("left eye drawn");
+    image(img, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
+    console.log("eye drawn");
 }
 
 // UTILITIES
