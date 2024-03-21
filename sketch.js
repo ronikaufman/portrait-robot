@@ -7,7 +7,7 @@ IDEAS:
 
 TO FIX:
 - glitchy mouth (assets/334018.jpg)
-- why do I need to resize the images?
+- why do I need to resize the images? (probably because they can't be too big? -> what's the biggest possible size?)
 */
 
 console.log('ml5 version:', ml5.version);
