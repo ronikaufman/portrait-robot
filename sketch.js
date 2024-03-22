@@ -4,9 +4,14 @@ IDEAS:
 - rotate eyes/mouth to fit better
 - use facemesh to cut more face pieces
 - add nose
+- no moustaches
+
+POSSIBLE FEATURES:
+- same/different eyes
+- cutting type
 
 TO FIX:
-- glitchy mouth (assets/334018.jpg)
+- glitchy mouth (assets/334018.jpg, 249671.jpg, 327614.jpg, 311210.jpg, 1391115.jpg, 3041129.jpg)
 - why do I need to resize the images? (probably because they can't be too big? -> what's the biggest possible size?)
 */
 
@@ -20,16 +25,8 @@ let imgRightEye;
 let imgMouth;
 
 let verticesLeftEye;
-let centroidLeftEye;
-let radLeftEye;
-
 let verticesRightEye;
-let centroidRightEye;
-let radRightEye;
-
 let verticesMouth;
-let centroidMouth;
-let radMouth;
 
 // by default all options are set to true
 const detectionOptions = {
@@ -38,17 +35,23 @@ const detectionOptions = {
 }
 
 function preload() {
-    let images = ["assets/301060.jpg", "assets/3555297.jpg", "assets/334018.jpg", "assets/311653.jpg"];
+    let images = [
+        "301060.jpg", "3555297.jpg", "334018.jpg", "311653.jpg", "258756.jpg", 
+        "3335802.jpg", "246598.jpg", "236796.jpg", "302001.jpg", "3041129.jpg", 
+        "1758997.jpg", "330043.jpg", "1226357.jpg", "249671.jpg", "1289864.jpg",
+        "1833064.jpg", "246627.jpg", "271022.jpg", "327614.jpg", "297595.jpg",
+        "251624.jpg", "303870.jpg", "313737.jpg", "1859895.jpg", "232461.jpg",
+        "1225372.jpg", "239168.jpg", "311210.jpg", "255972.jpg", "1231069.jpg",
+        "297114.jpg", "3555186.jpg", "334216.jpg", "279050.jpg", "273589.jpg",
+        "1391115.jpg", "243131.jpg", "245329.jpg"
+    ];
     shuffle(images, true);
-    //images = ["assets/334018.jpg", "assets/301060.jpg", "assets/311653.jpg", "assets/3555297.jpg"]; // problem with left eye!
-    //images = ["assets/334018.jpg", "assets/3555297.jpg", "assets/311653.jpg", "assets/301060.jpg"]; // probelm with mouth
-    //images = ["assets/334018.jpg", "assets/3555297.jpg", "assets/301060.jpg", "assets/311653.jpg"]; // problem with right eye
-    //images = ["assets/301060.jpg", "assets/301060.jpg", "assets/301060.jpg", "assets/301060.jpg"];
-    
-    imgBase = loadImage(images[0], () => console.log("Base image loaded"));
-    imgLeftEye = loadImage(images[1], () => console.log("Left eye image loaded"));
-    imgRightEye = loadImage(images[2], () => console.log("Right eye image loaded"));
-    imgMouth = loadImage(images[3], () => console.log("Mouth image loaded"));
+    console.log(images);
+
+    imgBase = loadImage("assets/"+images[0], () => console.log("Base image loaded"));
+    imgLeftEye = loadImage("assets/"+images[1], () => console.log("Left eye image loaded"));
+    imgRightEye = loadImage("assets/"+images[2], () => console.log("Right eye image loaded"));
+    imgMouth = loadImage("assets/"+images[3], () => console.log("Mouth image loaded"));
     //img = loadImage("https://cdn.jsdelivr.net/gh/ml5js/ml5-examples@release/p5js/FaceApi/FaceApi_Image_Landmarks/assets/frida.jpg");
 }
 
@@ -84,7 +87,7 @@ function modelReady() {
     faceapi.detectSingle(imgMouth, gotResultsMouth);
 }
 
-// BASE
+// BASE CALLBACK
 
 function gotResultsBase(err, result) {
     if (err) {
@@ -93,22 +96,18 @@ function gotResultsBase(err, result) {
     }
     // console.log(result)
     let detectionsBase = result;
+    console.log(result)
 
     if (detectionsBase) {
         //drawLandmarks(detectionsBase);
 
         verticesLeftEye = normalize(detectionsBase.parts.leftEye, width, height);
-        [centroidLeftEye, radLeftEye] = analyzeShape(verticesLeftEye);
-
         verticesRightEye = normalize(detectionsBase.parts.rightEye, width, height);
-        [centroidRightEye, radRightEye] = analyzeShape(verticesRightEye);
-
         verticesMouth = normalize(detectionsBase.parts.mouth, width, height);
-        [centroidMouth, radMouth] = analyzeShape(verticesMouth);
     }
 }
 
-// EYES
+// PARTS CALLBACKS
 
 function gotResultsLeftEye(err, result) {
     if (err) {
@@ -120,7 +119,8 @@ function gotResultsLeftEye(err, result) {
 
     if (detectionsLeftEye) {
         let vertices = normalize(detectionsLeftEye.parts.leftEye, imgLeftEye.width, imgLeftEye.height);
-        drawEye(vertices, imgLeftEye, centroidLeftEye, radLeftEye);
+        let [centroidLeftEye, radLeftEye] = analyzeShape(verticesLeftEye);
+        drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, 1.5);
     }
 }
 
@@ -134,13 +134,29 @@ function gotResultsRightEye(err, result) {
 
     if (detectionsRightEye) {
         let vertices = normalize(detectionsRightEye.parts.rightEye, imgRightEye.width, imgRightEye.height);
-        drawEye(vertices, imgRightEye, centroidRightEye, radRightEye);
+        let [centroidRightEye, radRightEye] = analyzeShape(verticesRightEye);
+        drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, 1.5);
     }
 }
 
-function drawEye(vertices, img, centroidEye, radEye) {
+function gotResultsMouth(err, result) {
+    if (err) {
+        console.log(err);
+        return;
+    }
+    // console.log(result)
+    let detectionsMouth = result;
+
+    if (detectionsMouth) {
+        let vertices = normalize(detectionsMouth.parts.mouth, imgMouth.width, imgMouth.height);
+        let [centroidMouth, radMouth] = analyzeShape(verticesMouth);
+        drawShape(vertices, imgMouth, centroidMouth, radMouth, 0.5);
+    }
+}
+
+function drawShape(vertices, img, targetCentroid, targetRad, borderFactor) {
     let [centroid, rad] = analyzeShape(vertices);
-    let border = rad*1.5;
+    let border = rad*borderFactor;
 
     let myMask = createGraphics(img.width, img.height);
     myMask.fill(0);
@@ -157,10 +173,10 @@ function drawEye(vertices, img, centroidEye, radEye) {
     //myMask.filter(BLUR, 5);
     img.mask(myMask);
 
-    let dx = width*(centroidEye[0]-radEye-border);
-    let dy = height*(centroidEye[1]-radEye-border);
-    let dWidth = width*(radEye+border)*2;
-    let dHeight = height*(radEye+border)*2;
+    let dx = width*(targetCentroid[0]-targetRad-border);
+    let dy = height*(targetCentroid[1]-targetRad-border);
+    let dWidth = width*(targetRad+border)*2;
+    let dHeight = height*(targetRad+border)*2;
     let sx = img.width*(centroid[0]-rad-border);
     let sy = img.height*(centroid[1]-rad-border);
     let sWidth = img.width*(rad+border)*2;
@@ -170,59 +186,7 @@ function drawEye(vertices, img, centroidEye, radEye) {
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = "black";
     image(img, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
-    console.log("eye drawn");
-}
-
-// MOUTH
-
-function gotResultsMouth(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-    // console.log(result)
-    let detectionsMouth = result;
-
-    if (detectionsMouth) {
-        let vertices = normalize(detectionsMouth.parts.mouth, imgMouth.width, imgMouth.height);
-        drawMouth(vertices);
-    }
-}
-
-function drawMouth(vertices) {
-    let [centroid, rad] = analyzeShape(vertices);
-    let border = rad*0.5;
-
-    let myMask = createGraphics(imgMouth.width, imgMouth.height);
-    myMask.fill(0);
-    myMask.noStroke();
-    myMask.beginShape();
-    vertices.forEach((item) => {
-        let theta = atan2(item[1]-centroid[1], item[0]-centroid[0]);
-        let r = dist(centroid[0], centroid[1], item[0], item[1]);
-        let x = centroid[0] + (r+border)*cos(theta);
-        let y = centroid[1] + (r+border)*sin(theta);
-        myMask.vertex(x*imgMouth.width, y*imgMouth.height);
-    })
-    myMask.endShape(CLOSE);
-    //myMask.filter(BLUR, 5);
-    imgMouth.mask(myMask);
-
-    let dx = width*(centroidMouth[0]-radMouth-border);
-    let dy = height*(centroidMouth[1]-radMouth-border);
-    let dWidth = width*(radMouth+border)*2;
-    let dHeight = height*(radMouth+border)*2;
-    let sx = imgMouth.width*(centroid[0]-rad-border);
-    let sy = imgMouth.height*(centroid[1]-rad-border);
-    let sWidth = imgMouth.width*(rad+border)*2;
-    let sHeight = imgMouth.height*(rad+border)*2;
-    drawingContext.shadowOffsetX = 0;
-    drawingContext.shadowOffsetY = 0;
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = "black";
-    image(imgMouth, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
-    console.log("mouth drawn");
-}
+} 
 
 // UTILITIES
 
@@ -255,7 +219,7 @@ function analyzeShape(vertices) {
     return [centroid, maxRad];
 }
 
-// TEMPLATE
+// OTHER STUFF
 
 function gotResults(err, result) {
     if (err) {
@@ -273,6 +237,13 @@ function gotResults(err, result) {
         blendMode(DIFFERENCE);
         //drawBox(detections);
         drawLandmarks(detections);
+    }
+}
+
+function drawLandmarks(detections) {
+    let landmarks = detections.landmarks._positions;
+    for (let lm of landmarks) {
+        circle(lm._x, lm._y, 5);
     }
 }
 
