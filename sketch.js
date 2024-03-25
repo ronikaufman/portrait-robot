@@ -10,8 +10,18 @@ POSSIBLE FEATURES:
 - same/different eyes
 - cutting type
 
+CRITERIA FOR PORTRAITS:
+- face-to-width ratio approximately between 0.2 and 0.4
+- eyes open, preferably looking toward the "camera"
+- not too dark
+- the face is the main focus
+- lips visible, no thick moustaches
+- not too blurry
+- face is straight up, not oblique
+- vertical
+
 TO FIX:
-- glitchy mouth (assets/334018.jpg, 249671.jpg, 327614.jpg, 311210.jpg, 1391115.jpg, 3041129.jpg)
+- glitchy mouth (assets/334018.jpg, 249671.jpg, 327614.jpg, 311210.jpg, 1391115.jpg, 3041129.jpg, 251624.jpg)
 - why do I need to resize the images? (probably because they can't be too big? -> what's the biggest possible size?)
 */
 
@@ -36,14 +46,11 @@ const detectionOptions = {
 
 function preload() {
     let images = [
-        "301060.jpg", "3555297.jpg", "334018.jpg", "311653.jpg", "258756.jpg", 
-        "3335802.jpg", "246598.jpg", "236796.jpg", "302001.jpg", "3041129.jpg", 
-        "1758997.jpg", "330043.jpg", "1226357.jpg", "249671.jpg", "1289864.jpg",
-        "1833064.jpg", "246627.jpg", "271022.jpg", "327614.jpg", "297595.jpg",
-        "251624.jpg", "303870.jpg", "313737.jpg", "1859895.jpg", "232461.jpg",
-        "1225372.jpg", "239168.jpg", "311210.jpg", "255972.jpg", "1231069.jpg",
-        "297114.jpg", "3555186.jpg", "334216.jpg", "279050.jpg", "273589.jpg",
-        "1391115.jpg", "243131.jpg", "245329.jpg"
+        "301060.jpg", "3555297.jpg", "334018.jpg", "311653.jpg", "236796.jpg", 
+        "302001.jpg", "3041129.jpg", "1758997.jpg", "1226357.jpg", "249671.jpg", 
+        "1289864.jpg", "1833064.jpg", "251624.jpg", "303870.jpg", "239168.jpg", 
+        "311210.jpg", "255972.jpg", "334216.jpg", "273589.jpg", "1391115.jpg", 
+        "243131.jpg"
     ];
     shuffle(images, true);
     console.log(images);
@@ -100,6 +107,7 @@ function gotResultsBase(err, result) {
 
     if (detectionsBase) {
         //drawLandmarks(detectionsBase);
+        //console.log("face to width ratio:" + detectionsBase.alignedRect._box._width/width);
 
         verticesLeftEye = normalize(detectionsBase.parts.leftEye, width, height);
         verticesRightEye = normalize(detectionsBase.parts.rightEye, width, height);
