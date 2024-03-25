@@ -8,7 +8,7 @@ IDEAS:
 
 POSSIBLE FEATURES:
 - same/different eyes
-- cutting type
+- cutting type (collage with shadow, round with blur, bounding rect with no shadow)
 
 CRITERIA FOR PORTRAITS:
 - face-to-width ratio approximately between 0.2 and 0.4
@@ -21,8 +21,7 @@ CRITERIA FOR PORTRAITS:
 - vertical
 
 TO FIX:
-- glitchy mouth (assets/334018.jpg, 249671.jpg, 327614.jpg, 311210.jpg, 1391115.jpg, 3041129.jpg, 251624.jpg)
-- why do I need to resize the images? (probably because they can't be too big? -> what's the biggest possible size?)
+- aspect ratio should be the same for the 4 images
 */
 
 console.log('ml5 version:', ml5.version);
@@ -158,6 +157,7 @@ function gotResultsMouth(err, result) {
     if (detectionsMouth) {
         let vertices = normalize(detectionsMouth.parts.mouth, imgMouth.width, imgMouth.height);
         let [centroidMouth, radMouth] = analyzeShape(verticesMouth);
+        vertices = convexHull(vertices);
         drawShape(vertices, imgMouth, centroidMouth, radMouth, 0.5);
     }
 }
@@ -225,6 +225,33 @@ function analyzeShape(vertices) {
     }
 
     return [centroid, maxRad];
+}
+
+function convexHull(points) {
+    // adapted from https://en.wikipedia.org/wiki/Gift_wrapping_algorithm#Pseudocode
+    points.sort((p, q) => p[0] - q[0]);
+    let hull = [];
+    let i = 0;
+    let endPoint;
+    let pointOnHull = points[0];
+    do {
+        hull.push(pointOnHull);
+        endPoint = points[0];
+        for (let j = 0; j < points.length; j++) {
+            let p = createVector(endPoint[0]-pointOnHull[0], endPoint[1]-pointOnHull[1]);
+            let q = createVector(points[j][0]-pointOnHull[0], points[j][1]-pointOnHull[1]);
+            if (pointsAreEqual(endPoint, pointOnHull) || (p.cross(q)).z < 0) {
+                endPoint = points[j];
+            }
+        }
+        i++;
+        pointOnHull = endPoint;
+    } while (!pointsAreEqual(endPoint, points[0]));
+	return hull;
+}
+
+function pointsAreEqual(a, b) {
+    return a[0] == b[0] && a[1] == b[1];
 }
 
 // OTHER STUFF
