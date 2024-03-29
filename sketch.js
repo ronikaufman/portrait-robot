@@ -5,10 +5,12 @@ IDEAS:
 - use facemesh to cut more face pieces
 - add nose
 - no moustaches
+- change background
+- make it more AI related
 
 POSSIBLE FEATURES:
 - same/different eyes
-- cutting type (collage with shadow, round with blur, bounding rect with no shadow)
+- cutting type (collage with shadow, round with blur, bounding rect with no shadow, whole horizontal bands)
 
 CRITERIA FOR PORTRAITS:
 - face-to-width ratio approximately between 0.2 and 0.4
@@ -21,10 +23,11 @@ CRITERIA FOR PORTRAITS:
 - vertical
 
 TO FIX:
-- aspect ratio should be the same for the 4 images
+- sizing is wrong?
+- rectangles fit better?
 */
 
-console.log('ml5 version:', ml5.version);
+//console.log('ml5 version:', ml5.version);
   
 let faceapi;
 
@@ -33,6 +36,7 @@ let imgLeftEye;
 let imgRightEye;
 let imgMouth;
 
+let baseSteersLeft;
 let verticesLeftEye;
 let verticesRightEye;
 let verticesMouth;
@@ -102,11 +106,14 @@ function gotResultsBase(err, result) {
     }
     // console.log(result)
     let detectionsBase = result;
-    console.log(result)
+    //console.log(result);
 
     if (detectionsBase) {
         //drawLandmarks(detectionsBase);
+        //drawBox(detectionsBase);
         //console.log("face to width ratio:" + detectionsBase.alignedRect._box._width/width);
+        baseSteersLeft = steeringLeft(detectionsBase);
+        //console.log("Base image steers left? " + baseSteersLeft);
 
         verticesLeftEye = normalize(detectionsBase.parts.leftEye, width, height);
         verticesRightEye = normalize(detectionsBase.parts.rightEye, width, height);
@@ -114,7 +121,7 @@ function gotResultsBase(err, result) {
     }
 }
 
-// PARTS CALLBACKS
+// PARTS CALLBACKS & DRAWING
 
 function gotResultsLeftEye(err, result) {
     if (err) {
@@ -125,9 +132,13 @@ function gotResultsLeftEye(err, result) {
     let detectionsLeftEye = result;
 
     if (detectionsLeftEye) {
-        let vertices = normalize(detectionsLeftEye.parts.leftEye, imgLeftEye.width, imgLeftEye.height);
+        let thisSteersLeft = steeringLeft(detectionsLeftEye);
+        let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
+
+        let part = steersInCorrectWay ? detectionsLeftEye.parts.leftEye : detectionsLeftEye.parts.rightEye;
+        let vertices = normalize(part, imgLeftEye.width, imgLeftEye.height);
         let [centroidLeftEye, radLeftEye] = analyzeShape(verticesLeftEye);
-        drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, 1.5);
+        drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, 1.5, !steersInCorrectWay);
     }
 }
 
@@ -140,9 +151,13 @@ function gotResultsRightEye(err, result) {
     let detectionsRightEye = result;
 
     if (detectionsRightEye) {
-        let vertices = normalize(detectionsRightEye.parts.rightEye, imgRightEye.width, imgRightEye.height);
+        let thisSteersLeft = steeringLeft(detectionsRightEye);
+        let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
+
+        let part = steersInCorrectWay ? detectionsRightEye.parts.rightEye : detectionsRightEye.parts.leftEye;
+        let vertices = normalize(part, imgRightEye.width, imgRightEye.height);
         let [centroidRightEye, radRightEye] = analyzeShape(verticesRightEye);
-        drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, 1.5);
+        drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, 1.5, !steersInCorrectWay);
     }
 }
 
@@ -155,14 +170,17 @@ function gotResultsMouth(err, result) {
     let detectionsMouth = result;
 
     if (detectionsMouth) {
+        let thisSteersLeft = steeringLeft(detectionsMouth);
+        let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
+
         let vertices = normalize(detectionsMouth.parts.mouth, imgMouth.width, imgMouth.height);
         let [centroidMouth, radMouth] = analyzeShape(verticesMouth);
         vertices = convexHull(vertices);
-        drawShape(vertices, imgMouth, centroidMouth, radMouth, 0.5);
+        drawShape(vertices, imgMouth, centroidMouth, radMouth, 0.5, !steersInCorrectWay);
     }
 }
 
-function drawShape(vertices, img, targetCentroid, targetRad, borderFactor) {
+function drawShape(vertices, img, targetCentroid, targetRad, borderFactor, flipIt) {
     let [centroid, rad] = analyzeShape(vertices);
     let border = rad*borderFactor;
 
@@ -181,19 +199,31 @@ function drawShape(vertices, img, targetCentroid, targetRad, borderFactor) {
     //myMask.filter(BLUR, 5);
     img.mask(myMask);
 
-    let dx = width*(targetCentroid[0]-targetRad-border);
-    let dy = height*(targetCentroid[1]-targetRad-border);
-    let dWidth = width*(targetRad+border)*2;
-    let dHeight = height*(targetRad+border)*2;
-    let sx = img.width*(centroid[0]-rad-border);
-    let sy = img.height*(centroid[1]-rad-border);
+    let targetBorder = min(targetRad, rad)*borderFactor;
+    let ratio = (img.width/img.height)/(width/height);
+    
+    let dWidth = width*(targetRad+targetBorder)*2*ratio;
+    let dHeight = height*(targetRad+targetBorder)*2;
+    let dx = width*targetCentroid[0] - dWidth/2;
+    let dy = height*targetCentroid[1] - dHeight/2;
+
     let sWidth = img.width*(rad+border)*2;
     let sHeight = img.height*(rad+border)*2;
+    let sx = img.width*centroid[0] - sWidth/2;
+    let sy = img.height*centroid[1] - sHeight/2;
+
     drawingContext.shadowOffsetX = 0;
     drawingContext.shadowOffsetY = 0;
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = "black";
+
+    push();
+    translate(dx+dWidth/2, dy+dHeight/2);
+    if (flipIt) scale(-1, 1);
+    translate(-dx-dWidth/2, -dy-dHeight/2);
+    //rect(dx, dy, dWidth, dHeight);
     image(img, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
+    pop();
 } 
 
 // UTILITIES
@@ -252,6 +282,26 @@ function convexHull(points) {
 
 function pointsAreEqual(a, b) {
     return a[0] == b[0] && a[1] == b[1];
+}
+
+function getCentroid(part) {
+    let cx = 0, cy = 0;
+    for (let item of part) {
+        cx += item._x;
+        cy += item._y;
+    }
+    cx /= part.length;
+    cy /= part.length;
+    return [cx, cy];
+}
+
+function steeringLeft(detections) {
+    let centroidLeftEye = getCentroid(detections.parts.leftEye);
+    let centroidRightEye = getCentroid(detections.parts.rightEye);
+    let {_x, _y, _width, _height} = detections.alignedRect._box;
+    let distToLeftEye = centroidLeftEye[0] - _x;
+    let distToRightEye = _x+_width - centroidRightEye[0];
+    return distToLeftEye < distToRightEye;
 }
 
 // OTHER STUFF
