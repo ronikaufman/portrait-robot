@@ -1,10 +1,8 @@
 /*
 IDEAS:
 - flip eyes in case of different face orientation (see distance to box)
-- rotate eyes/mouth to fit better
 - use facemesh to cut more face pieces
 - add nose
-- no moustaches
 - change background
 - make it more AI related
 
@@ -22,9 +20,9 @@ CRITERIA FOR PORTRAITS:
 - face is straight up, not oblique
 - vertical
 
-TO FIX:
-- sizing is wrong?
-- rectangles fit better?
+TO FIX/DO:
+- check if sizing is right
+- check if rotation is right
 */
 
 //console.log('ml5 version:', ml5.version);
@@ -137,8 +135,8 @@ function gotResultsLeftEye(err, result) {
 
         let part = steersInCorrectWay ? detectionsLeftEye.parts.leftEye : detectionsLeftEye.parts.rightEye;
         let vertices = normalize(part, imgLeftEye.width, imgLeftEye.height);
-        let [centroidLeftEye, radLeftEye] = analyzeShape(verticesLeftEye);
-        drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, 1.5, !steersInCorrectWay);
+        let [centroidLeftEye, radLeftEye, angleLeftEye] = analyzeShape(verticesLeftEye);
+        drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, angleLeftEye, 1.5, !steersInCorrectWay);
     }
 }
 
@@ -156,8 +154,8 @@ function gotResultsRightEye(err, result) {
 
         let part = steersInCorrectWay ? detectionsRightEye.parts.rightEye : detectionsRightEye.parts.leftEye;
         let vertices = normalize(part, imgRightEye.width, imgRightEye.height);
-        let [centroidRightEye, radRightEye] = analyzeShape(verticesRightEye);
-        drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, 1.5, !steersInCorrectWay);
+        let [centroidRightEye, radRightEye, angleRightEye] = analyzeShape(verticesRightEye);
+        drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, angleRightEye, 1.5, !steersInCorrectWay);
     }
 }
 
@@ -174,14 +172,14 @@ function gotResultsMouth(err, result) {
         let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
 
         let vertices = normalize(detectionsMouth.parts.mouth, imgMouth.width, imgMouth.height);
-        let [centroidMouth, radMouth] = analyzeShape(verticesMouth);
+        let [centroidMouth, radMouth, angleMouth] = analyzeShape(verticesMouth);
         vertices = convexHull(vertices);
-        drawShape(vertices, imgMouth, centroidMouth, radMouth, 0.5, !steersInCorrectWay);
+        drawShape(vertices, imgMouth, centroidMouth, radMouth, angleMouth, 0.5, !steersInCorrectWay);
     }
 }
 
-function drawShape(vertices, img, targetCentroid, targetRad, borderFactor, flipIt) {
-    let [centroid, rad] = analyzeShape(vertices);
+function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, borderFactor, flipIt) {
+    let [centroid, rad, angle] = analyzeShape(vertices);
     let border = rad*borderFactor;
 
     let myMask = createGraphics(img.width, img.height);
@@ -203,12 +201,12 @@ function drawShape(vertices, img, targetCentroid, targetRad, borderFactor, flipI
     let ratio = (img.width/img.height)/(width/height);
     
     let dWidth = width*(targetRad+targetBorder)*2*ratio;
-    let dHeight = height*(targetRad+targetBorder)*2;
+    let dHeight = height*(targetRad+targetBorder);
     let dx = width*targetCentroid[0] - dWidth/2;
     let dy = height*targetCentroid[1] - dHeight/2;
 
     let sWidth = img.width*(rad+border)*2;
-    let sHeight = img.height*(rad+border)*2;
+    let sHeight = img.height*(rad+border);
     let sx = img.width*centroid[0] - sWidth/2;
     let sy = img.height*centroid[1] - sHeight/2;
 
@@ -219,6 +217,9 @@ function drawShape(vertices, img, targetCentroid, targetRad, borderFactor, flipI
 
     push();
     translate(dx+dWidth/2, dy+dHeight/2);
+    let rot = targetAngle-angle;
+    if (abs(rot) > PI/2) rot += PI;
+    rotate(rot);
     if (flipIt) scale(-1, 1);
     translate(-dx-dWidth/2, -dy-dHeight/2);
     //rect(dx, dy, dWidth, dHeight);
@@ -254,7 +255,10 @@ function analyzeShape(vertices) {
         //if (r < minRad) minRad = r;
     }
 
-    return [centroid, maxRad];
+    let angle1 = atan2(vertices[0][1]-cy, vertices[0][0]-cx);
+    let angle2 = atan2(vertices[1][1]-cy, vertices[1][0]-cx);
+
+    return [centroid, maxRad, (angle1+angle2)/2];
 }
 
 function convexHull(points) {
