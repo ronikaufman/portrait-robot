@@ -23,6 +23,7 @@ CRITERIA FOR PORTRAITS:
 TO FIX/DO:
 - check if sizing is right
 - check if rotation is right
+- loading animation
 */
 
 //console.log('ml5 version:', ml5.version);
@@ -81,8 +82,19 @@ function setup(){
 }
 
 function draw(){
-	//background(200);
+	background(0);
     image(imgBase, 0, 0, width, height);
+    //filter(BLUR, 10);
+    /*
+    let col1 = "#4bd3e5", col2 = "#ffd919";
+    let x = 0, y = 0, w = width, h = height
+    for (let z = 0; z < h; z += 0.5) {
+        let v = (1-cos(PI*z/h))/2;
+        stroke(lerpColor(color(col1), color(col2), v));
+        line(x, y+z, x+w, y+z);
+      }
+    */
+    //sobelFilter(imgBase);
 }
 
 function modelReady() {
@@ -107,8 +119,9 @@ function gotResultsBase(err, result) {
     //console.log(result);
 
     if (detectionsBase) {
-        //drawLandmarks(detectionsBase);
         //drawBox(detectionsBase);
+        //drawFaceRect(detectionsBase);
+        //drawLandmarks(detectionsBase);
         //console.log("face to width ratio:" + detectionsBase.alignedRect._box._width/width);
         baseSteersLeft = steeringLeft(detectionsBase);
         //console.log("Base image steers left? " + baseSteersLeft);
@@ -337,9 +350,20 @@ function drawLandmarks(detections) {
 }
 
 function drawBox(detections) {
-    const alignedRect = detections.alignedRect;
-    const {_x, _y, _width, _height} = alignedRect._box;
-    rect(_x, _y, _width, _height)
+    let alignedRect = detections.alignedRect;
+    let {_x, _y, _width, _height} = alignedRect._box;
+    rect(_x, _y, _width, _height);
+}
+
+function drawFaceRect(detections) {
+    let alignedRect = detections.alignedRect;
+    let {_x, _y, _width, _height} = alignedRect._box;
+    //_x = 0;
+    //_width = width;
+
+    //scale(width/_width)
+    //translate(-_x, -_y);
+    image(imgBase, _x, _y, _width, _height, _x, _y, _width, _height);
 }
 
 function drawLandmarks(detections) {
@@ -388,4 +412,31 @@ function drawLandmarks(detections) {
     endShape();
 
     pop();
+}
+
+function sobelFilter(img) {
+    noStroke();
+    //colorMode(HSB, PI, 255, 255);
+    let step = 1;
+    for (let x = step; x < img.width-step; x += step) {
+        for (let y = step; y < img.height-step; y += step) {
+            let tl = brightness(img.get(x-step, y-step)); // top left
+            let l = brightness(img.get(x-step, y)); // left
+            let bl = brightness(img.get(x-step, y+step)); // bottom left
+            let t = brightness(img.get(x, y-step)); // top
+            let b = brightness(img.get(x, y+step)); // bottom
+            let tr = brightness(img.get(x+step, y-step)); // top right
+            let r = brightness(img.get(x+step, y)); // right
+            let br = brightness(img.get(x+step, y+step)); // bottom right
+          
+            let Gx = tl + 2*l + bl - tr - 2*r - br;
+            let Gy = tl + 2*t + tr - bl - 2*b - br;
+            let Gz = sqrt(sq(Gx)+sq(Gy));
+            let theta = atan(Gy/Gx);
+          
+            //fill(PI/2, 255, Gz); 
+            fill(0, 255, 255, Gz); 
+            square(x, y, step);
+        }
+    }
 }
