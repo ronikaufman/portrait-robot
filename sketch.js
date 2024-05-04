@@ -1,6 +1,5 @@
 /*
 IDEAS:
-- flip eyes in case of different face orientation (see distance to box)
 - use facemesh to cut more face pieces
 - add nose
 - change background
@@ -19,6 +18,10 @@ CRITERIA FOR PORTRAITS:
 - not too blurry
 - face is straight up, not oblique
 - vertical
+- nothing in front of the face (hands, etc.)
+- no miniatures
+- only 1 person
+- avoid text
 
 TO FIX/DO:
 - check if sizing is right
@@ -47,6 +50,14 @@ const detectionOptions = {
 }
 
 function preload() {
+    loadTable("assets/data.csv", "ssv", "header", (data) => {
+        let rows = shuffle(data.rows);
+        //imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => console.log("Base image loaded: " + rows[0].obj.ref));
+        //imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => console.log("Left eye image loaded: " + rows[1].obj.ref));
+        //imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => console.log("Right eye image loaded: " + rows[2].obj.ref));
+        //imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => console.log("Mouth image loaded: " + rows[3].obj.ref));
+    });
+
     let images = [
         "301060.jpg", "3555297.jpg", "334018.jpg", "311653.jpg", "236796.jpg", 
         "302001.jpg", "3041129.jpg", "1758997.jpg", "1226357.jpg", "249671.jpg", 
@@ -55,6 +66,7 @@ function preload() {
         "243131.jpg"
     ];
     shuffle(images, true);
+    images[0] = "461705.jpg";
     console.log(images);
 
     imgBase = loadImage("assets/"+images[0], () => console.log("Base image loaded"));
@@ -74,17 +86,26 @@ function setup(){
 
     noLoop();
 
+    /*
     noFill();
     strokeWeight(2);
     stroke(0);
+    */
 
     faceapi = ml5.faceApi(detectionOptions, modelReady);
+
+    background(0);
+    textAlign(CENTER, CENTER);
+    textFont("Times New Roman", 16);
+    fill(255);
+    noStroke();
+    text("loading...", width/2, height/2);
 }
 
 function draw(){
-	background(0);
-    image(imgBase, 0, 0, width, height);
+    //image(imgBase, 0, 0, width, height);
     //filter(BLUR, 10);
+    //sobelFilter(imgBase);
     /*
     let col1 = "#4bd3e5", col2 = "#ffd919";
     let x = 0, y = 0, w = width, h = height
@@ -92,9 +113,8 @@ function draw(){
         let v = (1-cos(PI*z/h))/2;
         stroke(lerpColor(color(col1), color(col2), v));
         line(x, y+z, x+w, y+z);
-      }
+    }
     */
-    //sobelFilter(imgBase);
 }
 
 function modelReady() {
@@ -102,9 +122,11 @@ function modelReady() {
     //console.log(faceapi);
 
     faceapi.detectSingle(imgBase, gotResultsBase);
-    faceapi.detectSingle(imgLeftEye, gotResultsLeftEye);
-    faceapi.detectSingle(imgRightEye, gotResultsRightEye);
-    faceapi.detectSingle(imgMouth, gotResultsMouth);
+    //faceapi.detectSingle(imgLeftEye, gotResultsLeftEye);
+    //faceapi.detectSingle(imgRightEye, gotResultsRightEye);
+    //faceapi.detectSingle(imgMouth, gotResultsMouth);
+
+    image(imgBase, 0, 0, width, height);
 }
 
 // BASE CALLBACK
@@ -121,7 +143,7 @@ function gotResultsBase(err, result) {
     if (detectionsBase) {
         //drawBox(detectionsBase);
         //drawFaceRect(detectionsBase);
-        //drawLandmarks(detectionsBase);
+        drawLandmarks(detectionsBase);
         //console.log("face to width ratio:" + detectionsBase.alignedRect._box._width/width);
         baseSteersLeft = steeringLeft(detectionsBase);
         //console.log("Base image steers left? " + baseSteersLeft);
@@ -342,12 +364,14 @@ function gotResults(err, result) {
     }
 }
 
+/*
 function drawLandmarks(detections) {
     let landmarks = detections.landmarks._positions;
     for (let lm of landmarks) {
         circle(lm._x, lm._y, 5);
     }
 }
+*/
 
 function drawBox(detections) {
     let alignedRect = detections.alignedRect;
@@ -368,6 +392,10 @@ function drawFaceRect(detections) {
 
 function drawLandmarks(detections) {
     push();
+
+    noFill();
+    stroke(0, 255, 0);
+    strokeWeight(2);
 
     // mouth
     beginShape();
