@@ -31,7 +31,7 @@ TO FIX/DO:
 
 //console.log('ml5 version:', ml5.version);
   
-let faceapi;
+let faceApi;
 
 let imgBase;
 let imgLeftEye;
@@ -52,28 +52,11 @@ const detectionOptions = {
 function preload() {
     loadTable("assets/data.csv", "ssv", "header", (data) => {
         let rows = shuffle(data.rows);
-        //imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => console.log("Base image loaded: " + rows[0].obj.ref));
-        //imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => console.log("Left eye image loaded: " + rows[1].obj.ref));
-        //imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => console.log("Right eye image loaded: " + rows[2].obj.ref));
-        //imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => console.log("Mouth image loaded: " + rows[3].obj.ref));
+        imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => console.log("Base image loaded: " + rows[0].obj.ref));
+        imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => console.log("Left eye image loaded: " + rows[1].obj.ref));
+        imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => console.log("Right eye image loaded: " + rows[2].obj.ref));
+        imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => console.log("Mouth image loaded: " + rows[3].obj.ref));
     });
-
-    let images = [
-        "301060.jpg", "3555297.jpg", "334018.jpg", "311653.jpg", "236796.jpg", 
-        "302001.jpg", "3041129.jpg", "1758997.jpg", "1226357.jpg", "249671.jpg", 
-        "1289864.jpg", "1833064.jpg", "251624.jpg", "303870.jpg", "239168.jpg", 
-        "311210.jpg", "255972.jpg", "334216.jpg", "273589.jpg", "1391115.jpg", 
-        "243131.jpg"
-    ];
-    shuffle(images, true);
-    images[0] = "461705.jpg";
-    console.log(images);
-
-    imgBase = loadImage("assets/"+images[0], () => console.log("Base image loaded"));
-    imgLeftEye = loadImage("assets/"+images[1], () => console.log("Left eye image loaded"));
-    imgRightEye = loadImage("assets/"+images[2], () => console.log("Right eye image loaded"));
-    imgMouth = loadImage("assets/"+images[3], () => console.log("Mouth image loaded"));
-    //img = loadImage("https://cdn.jsdelivr.net/gh/ml5js/ml5-examples@release/p5js/FaceApi/FaceApi_Image_Landmarks/assets/frida.jpg");
 }
 
 function setup(){
@@ -92,7 +75,7 @@ function setup(){
     stroke(0);
     */
 
-    faceapi = ml5.faceApi(detectionOptions, modelReady);
+    faceApi = ml5.faceApi(detectionOptions, modelReady);
 
     background(0);
     textAlign(CENTER, CENTER);
@@ -119,12 +102,11 @@ function draw(){
 
 function modelReady() {
     console.log('ready!');
-    //console.log(faceapi);
 
-    faceapi.detectSingle(imgBase, gotResultsBase);
-    //faceapi.detectSingle(imgLeftEye, gotResultsLeftEye);
-    //faceapi.detectSingle(imgRightEye, gotResultsRightEye);
-    //faceapi.detectSingle(imgMouth, gotResultsMouth);
+    faceApi.detectSingle(imgBase, gotResultsBase);
+    faceApi.detectSingle(imgLeftEye, gotResultsLeftEye);
+    faceApi.detectSingle(imgRightEye, gotResultsRightEye);
+    faceApi.detectSingle(imgMouth, gotResultsMouth);
 
     image(imgBase, 0, 0, width, height);
 }
@@ -136,15 +118,14 @@ function gotResultsBase(err, result) {
         console.log(err);
         return;
     }
-    // console.log(result)
     let detectionsBase = result;
-    //console.log(result);
 
     if (detectionsBase) {
         //drawBox(detectionsBase);
         //drawFaceRect(detectionsBase);
-        drawLandmarks(detectionsBase);
-        //console.log("face to width ratio:" + detectionsBase.alignedRect._box._width/width);
+        //drawLandmarks(detectionsBase);
+        console.log("face to width ratio: " + detectionsBase.alignedRect._box._width/width);
+        console.log("aspect ratio: " + width/height);
         baseSteersLeft = steeringLeft(detectionsBase);
         //console.log("Base image steers left? " + baseSteersLeft);
 
@@ -161,7 +142,6 @@ function gotResultsLeftEye(err, result) {
         console.log(err);
         return;
     }
-    // console.log(result)
     let detectionsLeftEye = result;
 
     if (detectionsLeftEye) {
@@ -180,7 +160,6 @@ function gotResultsRightEye(err, result) {
         console.log(err);
         return;
     }
-    // console.log(result)
     let detectionsRightEye = result;
 
     if (detectionsRightEye) {
@@ -199,7 +178,6 @@ function gotResultsMouth(err, result) {
         console.log(err);
         return;
     }
-    // console.log(result)
     let detectionsMouth = result;
 
     if (detectionsMouth) {
