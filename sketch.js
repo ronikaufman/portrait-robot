@@ -1,17 +1,14 @@
 /*
 IDEAS:
-- use facemesh to cut more face pieces
 - add nose
-- change background
-- make it more AI related
 
 POSSIBLE FEATURES:
-- same/different eyes
+- same/different eyes/features
 - cutting type (collage with shadow, round with blur, bounding rect with no shadow, whole horizontal bands)
 
-CRITERIA FOR PORTRAITS:
-- face-to-width ratio approximately between 0.2 and 0.4
-- eyes open, preferably looking toward the "camera"
+(LOOSE) CRITERIA FOR PORTRAITS:
+- face-to-width ratio between 0.2 and 0.4
+- eyes open, looking toward the "camera"
 - not too dark
 - the face is the main focus
 - lips visible, no thick moustaches
@@ -19,17 +16,26 @@ CRITERIA FOR PORTRAITS:
 - face is straight up, not oblique
 - vertical
 - nothing in front of the face (hands, etc.)
-- no miniatures
+- no miniatures, no border/frame
 - only 1 person
-- avoid text
+- no text
+
+BACKGROUND IDEAS:
+- plain color
+- landscape
+- clouds
+- newspaper/letters
 
 TO FIX/DO:
 - check if sizing is right
 - check if rotation is right
 - loading animation
+- fix loading (use a checkIfEverythingIsLoaded function as a callback to all loads?)
 */
 
 //console.log('ml5 version:', ml5.version);
+
+let bodypix;
   
 let faceApi;
 
@@ -43,20 +49,45 @@ let verticesLeftEye;
 let verticesRightEye;
 let verticesMouth;
 
+let imgBackground;
+
 // by default all options are set to true
-const detectionOptions = {
+const faceApiOptions = {
     withLandmarks: true,
     withDescriptors: false,
 }
 
+//https://github.com/processing/p5.js/blob/main/src/core/preload.js
+//https://github.com/processing/p5.js/blob/main/src/core/main.js
+//https://github.com/processing/p5.js/issues/5244
+//p5.prototype.registerPreloadMethod(ml5.bodyPix);
+//registerPromisePreload
+
 function preload() {
     loadTable("assets/data.csv", "ssv", "header", (data) => {
         let rows = shuffle(data.rows);
+        /*
+        rows[0].obj = {
+            ref: "433391",
+            extension: "jpg"
+        };
+        */
         imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => console.log("Base image loaded: " + rows[0].obj.ref));
         imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => console.log("Left eye image loaded: " + rows[1].obj.ref));
         imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => console.log("Right eye image loaded: " + rows[2].obj.ref));
         imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => console.log("Mouth image loaded: " + rows[3].obj.ref));
+
+        /*
+        let idx = 193;
+        imgBase = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Base image loaded: " + data.rows[idx].obj.ref));
+        imgLeftEye = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Left eye image loaded: " + data.rows[idx].obj.ref));
+        imgRightEye = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Right eye image loaded: " + data.rows[idx].obj.ref));
+        imgMouth = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Mouth image loaded: " + data.rows[idx].obj.ref));
+        */
     });
+    bodypix = ml5.bodyPix(() => console.log("Body Pix loaded"));
+    let backs = ["back1", "back2", "back3", "back4", "back5", "back6", "back7"];
+    imgBackground = loadImage("assets/"+random(backs)+".webp");
 }
 
 function setup(){
@@ -67,53 +98,215 @@ function setup(){
     imgRightEye.resize(width, 0);
     imgMouth.resize(width, 0);
 
+    imgBackground.resize(0, height);
+
+    console.log("Resizing done: "+width+" "+height);
+
     noLoop();
 
+    //background("#984638");
     /*
-    noFill();
-    strokeWeight(2);
-    stroke(0);
-    */
-
-    faceApi = ml5.faceApi(detectionOptions, modelReady);
-
-    background(0);
-    textAlign(CENTER, CENTER);
-    textFont("Times New Roman", 16);
-    fill(255);
-    noStroke();
-    text("loading...", width/2, height/2);
-}
-
-function draw(){
-    //image(imgBase, 0, 0, width, height);
-    //filter(BLUR, 10);
-    //sobelFilter(imgBase);
-    /*
-    let col1 = "#4bd3e5", col2 = "#ffd919";
-    let x = 0, y = 0, w = width, h = height
+    let palette = shuffle(["#FCFE66", "#42FCFC", "#4DDB49", "#FB7039", "#3945FE"]);
+    let col1 = palette[0], col2 = palette[1];
+    let x = 0, y = 0;
     for (let z = 0; z < h; z += 0.5) {
         let v = (1-cos(PI*z/h))/2;
         stroke(lerpColor(color(col1), color(col2), v));
         line(x, y+z, x+w, y+z);
     }
     */
+   /*
+    textAlign(CENTER, CENTER);
+    textFont("Times New Roman", 16);
+    fill(0);
+    noStroke();
+    text("loading...", width/2, height/2);
+    */
+
+    image(imgBackground, random(width-imgBackground.width), 0);
+
+    drawingContext.shadowOffsetX = 0;
+    drawingContext.shadowOffsetY = 0;
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = "#00000095";
 }
 
-function modelReady() {
-    console.log('ready!');
+function draw() {
+    bodypix.segment(imgBase, bodyPixResults);
+    //faceApi = ml5.faceApi(faceApiOptions, faceApiReady);
+}
 
-    faceApi.detectSingle(imgBase, gotResultsBase);
-    faceApi.detectSingle(imgLeftEye, gotResultsLeftEye);
-    faceApi.detectSingle(imgRightEye, gotResultsRightEye);
-    faceApi.detectSingle(imgMouth, gotResultsMouth);
+// ********** BodyPix **********
 
-    image(imgBase, 0, 0, width, height);
+function bodyPixResults(err, result) {
+    if (err) {
+        console.log(imgBase.width, imgBase.height)
+        console.log(err);
+        return;
+    }
+
+    console.log("bodyPix ready");
+    let backgroundMask = result.backgroundMask;
+    backgroundMask.filter(BLUR, 10);
+
+    let points = getMaskPolygon(backgroundMask);
+    points = convexHull(points);
+    let img = imgBase.get();
+    let myMask = createGraphics(img.width, img.height);
+    myMask.fill(0);
+    myMask.noStroke();
+    myMask.beginShape();
+    points.forEach((item) => {
+        let x = item[0];
+        let y = item[1];
+        myMask.vertex(x, y);
+    })
+    myMask.endShape(CLOSE);
+    //myMask.filter(BLUR, 20);
+    img.mask(myMask);
+    myMask.remove();
+
+    translate(width/2, height/2);
+    scale(0.9);
+    translate(-width/2, -height/2);
+
+    image(img, 0, 0);
+
+    faceApi = ml5.faceApi(faceApiOptions, faceApiReady);
+}
+
+function getMaskPolygon(mask) {
+    let points = [];
+    
+    // marchin squares algorithm to get the outline(s) of the shape drawn in mask
+    let n = 50;
+    let sx = mask.width/n;
+    let sy = mask.height/n;
+    for (let x = 0; x < mask.width; x += sx) {
+        for (let y = 0; y < mask.height; y += sy) {
+            let inNW = pointInMask(mask, x, y);
+            let inNE = pointInMask(mask, x+sx, y);
+            let inSE = pointInMask(mask, x+sx, y+sy);
+            let inSW = pointInMask(mask, x, y+sy);
+            if (!inNW && inNE && inSE && inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy]);
+                points.push([x, y+sy]);
+                points.push([x, y+sy/2]);
+            } else if (inNW && !inNE && inSE && inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx, y+sy/2]);
+                points.push([x+sx, y+sy]);
+                points.push([x, y+sy]);
+                points.push([x, y]);
+            } else if (inNW && inNE && !inSE && inSW) {
+                points.push([x+sx, y+sy/2]);
+                points.push([x+sx/2, y+sy]);
+                points.push([x, y+sy]);
+                points.push([x, y]);
+                points.push([x+sx, y]);
+            } else if (inNW && inNE && inSE && !inSW) {
+                points.push([x, y+sy/2]);
+                points.push([x, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy]);
+                points.push([x+sx/2, y+sy]);
+            } else if (!inNW && !inNE && inSE && inSW) {
+                points.push([x, y+sy/2]);
+                points.push([x+sx, y+sy/2]);
+                points.push([x+sx, y+sy]);
+                points.push([x, y+sy]);
+            } else if (inNW && !inNE && !inSE && inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx/2, y+sy]);
+                points.push([x, y+sy]);
+                points.push([x, y]);
+            } else if (inNW && inNE && !inSE && !inSW) {
+                points.push([x, y+sy/2]);
+                points.push([x, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy/2]);
+            } else if (!inNW && inNE && inSE && !inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy]);
+                points.push([x+sx/2, y+sy]);
+            } else if (inNW && !inNE && !inSE && !inSW) {
+                points.push([x, y]);
+                points.push([x+sx/2, y]);
+                points.push([x, y+sy/2]);
+            } else if (!inNW && inNE && !inSE && !inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy/2]);
+            } else if (!inNW && !inNE && inSE && !inSW) {
+                points.push([x+sx, y+sy]);
+                points.push([x+sx/2, y+sy]);
+                points.push([x+sx, y+sy/2]);
+            } else if (!inNW && !inNE && !inSE && inSW) {
+                points.push([x+sx/2, y+sy]);
+                points.push([x, y+sy]);
+                points.push([x, y+sy/2]);
+            } else if (!inNW && inNE && !inSE && inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy/2]);
+                points.push([x+sx/2, y+sy]);
+                points.push([x, y+sy]);
+                points.push([x, y+sy/2]);
+            } else if (inNW && !inNE && inSE && !inSW) {
+                points.push([x+sx/2, y]);
+                points.push([x+sx, y+sy/2]);
+                points.push([x+sx, y+sy]);
+                points.push([x+sx/2, y+sy]);
+                points.push([x, y+sy/2]);
+                points.push([x, y]);
+            } else if (inNW && inNE && inSE && inSW) {
+                points.push([x, y]);
+                points.push([x+sx, y]);
+                points.push([x+sx, y+sy]);
+                points.push([x, y+sy]);
+            }
+        }
+    }
+
+    /*
+    noFill();
+    stroke(0, 0, 255);
+    beginShape();
+    for (let p of points) {
+        vertex(p[0], p[1]);
+    }
+    endShape(CLOSE);
+    */
+
+    //console.log(points);
+    
+    return points;
+}
+
+function pointInMask(mask, x, y) {
+    let col = mask.get(x, y);
+    return col[3] > 0;
+}
+
+// ********** Face-Api **********
+
+function faceApiReady() {
+    console.log("face-api ready");
+
+    faceApi.detectSingle(imgBase, faceApiResultsBase);
+    faceApi.detectSingle(imgLeftEye, faceApiResultsLeftEye);
+    faceApi.detectSingle(imgRightEye, faceApiResultsRightEye);
+    faceApi.detectSingle(imgMouth, faceApiResultsMouth);
+
+    //image(imgBase, 0, 0, width, height);
 }
 
 // BASE CALLBACK
 
-function gotResultsBase(err, result) {
+function faceApiResultsBase(err, result) {
     if (err) {
         console.log(err);
         return;
@@ -137,7 +330,7 @@ function gotResultsBase(err, result) {
 
 // PARTS CALLBACKS & DRAWING
 
-function gotResultsLeftEye(err, result) {
+function faceApiResultsLeftEye(err, result) {
     if (err) {
         console.log(err);
         return;
@@ -155,7 +348,7 @@ function gotResultsLeftEye(err, result) {
     }
 }
 
-function gotResultsRightEye(err, result) {
+function faceApiResultsRightEye(err, result) {
     if (err) {
         console.log(err);
         return;
@@ -173,7 +366,7 @@ function gotResultsRightEye(err, result) {
     }
 }
 
-function gotResultsMouth(err, result) {
+function faceApiResultsMouth(err, result) {
     if (err) {
         console.log(err);
         return;
@@ -209,6 +402,7 @@ function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, border
     myMask.endShape(CLOSE);
     //myMask.filter(BLUR, 5);
     img.mask(myMask);
+    myMask.remove();
 
     let targetBorder = min(targetRad, rad)*borderFactor;
     let ratio = (img.width/img.height)/(width/height);
@@ -222,11 +416,6 @@ function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, border
     let sHeight = img.height*(rad+border);
     let sx = img.width*centroid[0] - sWidth/2;
     let sy = img.height*centroid[1] - sHeight/2;
-
-    drawingContext.shadowOffsetX = 0;
-    drawingContext.shadowOffsetY = 0;
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = "black";
 
     push();
     translate(dx+dWidth/2, dy+dHeight/2);
@@ -323,7 +512,7 @@ function steeringLeft(detections) {
 
 // OTHER STUFF
 
-function gotResults(err, result) {
+function faceApiResults(err, result) {
     if (err) {
         console.log(err)
         return
