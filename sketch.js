@@ -27,41 +27,36 @@ BACKGROUND IDEAS:
 - newspaper/letters
 
 TO FIX/DO:
-- check if sizing is right
-- check if rotation is right
-- loading animation
+- check if sizing/rotation of face parts is right
+- loading animation?
+- implement highlight library
+- decide on canvas sizing
 - fix loading (use a checkIfEverythingIsLoaded function as a callback to all loads?)
 */
 
 //console.log('ml5 version:', ml5.version);
 
-let bodypix;
-  
+let bodyPix;
 let faceApi;
 
 let imgBase;
 let imgLeftEye;
 let imgRightEye;
 let imgMouth;
+let imgBackground;
 
 let baseSteersLeft;
 let verticesLeftEye;
 let verticesRightEye;
 let verticesMouth;
 
-let imgBackground;
+let loadCount = 0;
 
 // by default all options are set to true
 const faceApiOptions = {
     withLandmarks: true,
     withDescriptors: false,
 }
-
-//https://github.com/processing/p5.js/blob/main/src/core/preload.js
-//https://github.com/processing/p5.js/blob/main/src/core/main.js
-//https://github.com/processing/p5.js/issues/5244
-//p5.prototype.registerPreloadMethod(ml5.bodyPix);
-//registerPromisePreload
 
 function preload() {
     loadTable("assets/data.csv", "ssv", "header", (data) => {
@@ -72,27 +67,25 @@ function preload() {
             extension: "jpg"
         };
         */
-        imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => console.log("Base image loaded: " + rows[0].obj.ref));
-        imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => console.log("Left eye image loaded: " + rows[1].obj.ref));
-        imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => console.log("Right eye image loaded: " + rows[2].obj.ref));
-        imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => console.log("Mouth image loaded: " + rows[3].obj.ref));
-
-        /*
-        let idx = 193;
-        imgBase = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Base image loaded: " + data.rows[idx].obj.ref));
-        imgLeftEye = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Left eye image loaded: " + data.rows[idx].obj.ref));
-        imgRightEye = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Right eye image loaded: " + data.rows[idx].obj.ref));
-        imgMouth = loadImage("portraits/"+data.rows[idx].obj.ref+"."+data.rows[idx].obj.extension, () => console.log("Mouth image loaded: " + data.rows[idx].obj.ref));
-        */
+        //rows[0] = data.rows[103];
+        imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
+        imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
+        imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {console.log("Right eye image loaded: " + rows[2].obj.ref);everythingLoaded()});
+        imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {console.log("Mouth image loaded: " + rows[3].obj.ref);everythingLoaded()});
     });
-    bodypix = ml5.bodyPix(() => console.log("Body Pix loaded"));
+    bodyPix = ml5.bodyPix(() => {console.log("Body Pix loaded");everythingLoaded()});
     let backs = ["back1", "back2", "back3", "back4", "back5", "back6", "back7"];
-    imgBackground = loadImage("assets/"+random(backs)+".webp");
+    imgBackground = loadImage("assets/"+random(backs)+".webp", () => {console.log("Background image loaded");everythingLoaded()});
 }
 
-function setup(){
+function everythingLoaded() {
+    if (loadCount++ < 5) {
+        return;
+    }
+    console.log("Everything is loaded!");
+
     let w = 500, h = w*imgBase.height/imgBase.width;
-	createCanvas(w, h);
+	resizeCanvas(w, h);
     imgBase.resize(width, height);
     imgLeftEye.resize(width, 0);
     imgRightEye.resize(width, 0);
@@ -102,39 +95,37 @@ function setup(){
 
     console.log("Resizing done: "+width+" "+height);
 
-    noLoop();
-
-    //background("#984638");
-    /*
-    let palette = shuffle(["#FCFE66", "#42FCFC", "#4DDB49", "#FB7039", "#3945FE"]);
-    let col1 = palette[0], col2 = palette[1];
-    let x = 0, y = 0;
-    for (let z = 0; z < h; z += 0.5) {
-        let v = (1-cos(PI*z/h))/2;
-        stroke(lerpColor(color(col1), color(col2), v));
-        line(x, y+z, x+w, y+z);
-    }
-    */
-   /*
-    textAlign(CENTER, CENTER);
-    textFont("Times New Roman", 16);
-    fill(0);
-    noStroke();
-    text("loading...", width/2, height/2);
-    */
-
     image(imgBackground, random(width-imgBackground.width), 0);
 
     drawingContext.shadowOffsetX = 0;
     drawingContext.shadowOffsetY = 0;
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = "#00000095";
-}
 
-function draw() {
-    bodypix.segment(imgBase, bodyPixResults);
+    bodyPix.segment(imgBase, bodyPixResults);
     //faceApi = ml5.faceApi(faceApiOptions, faceApiReady);
 }
+
+function setup() {
+	createCanvas(500, 500);
+
+    noLoop();
+
+    //background(0);
+    textAlign(CENTER, CENTER);
+    textFont("Times New Roman", 16);
+    fill(255);
+    noStroke();
+    text("loading...", width/2, height/2);
+
+    console.log("Setup done");
+}
+
+/*
+function draw() {
+    
+}
+*/
 
 // ********** BodyPix **********
 
@@ -167,7 +158,8 @@ function bodyPixResults(err, result) {
     myMask.remove();
 
     translate(width/2, height/2);
-    scale(0.9);
+    scale(0.95);
+    rotate(random(-1, 1)*0.03);
     translate(-width/2, -height/2);
 
     image(img, 0, 0);
