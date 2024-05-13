@@ -20,11 +20,10 @@ POSSIBLE FEATURES:
 - only 1 person
 - no text
 
-BACKGROUND IDEAS:
-- plain color
+(LOOSE) CRITERIA FOR BACKGROUND IDEAS:
 - landscape
-- clouds
-- newspaper/letters
+- no borders
+- no people
 
 TO FIX/DO:
 - check if sizing/rotation of face parts is right
@@ -59,23 +58,21 @@ const faceApiOptions = {
 }
 
 function preload() {
-    loadTable("assets/data.csv", "ssv", "header", (data) => {
+    loadTable("portraits/data.csv", "ssv", "header", (data) => {
         let rows = shuffle(data.rows);
-        /*
-        rows[0].obj = {
-            ref: "433391",
-            extension: "jpg"
-        };
-        */
-        //rows[0] = data.rows[103];
-        imgBase = loadImage("assets/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
-        imgLeftEye = loadImage("assets/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
-        imgRightEye = loadImage("assets/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {console.log("Right eye image loaded: " + rows[2].obj.ref);everythingLoaded()});
-        imgMouth = loadImage("assets/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {console.log("Mouth image loaded: " + rows[3].obj.ref);everythingLoaded()});
+        //rows[0] = data.rows[data.rows.length-1];
+        imgBase = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
+        imgLeftEye = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
+        imgRightEye = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {console.log("Right eye image loaded: " + rows[2].obj.ref);everythingLoaded()});
+        imgMouth = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {console.log("Mouth image loaded: " + rows[3].obj.ref);everythingLoaded()});
+    });
+    loadTable("backgrounds/data.csv", "ssv", "header", (data) => {
+        let rows = shuffle(data.rows);
+        //rows[0] = data.rows[data.rows.length-1];
+        console.log(rows[0]);
+        imgBackground = loadImage("backgrounds/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Background image loaded: " + rows[0].obj.ref);everythingLoaded()});
     });
     bodyPix = ml5.bodyPix(() => {console.log("Body Pix loaded");everythingLoaded()});
-    let backs = ["back1", "back2", "back3", "back4", "back5", "back6", "back7"];
-    imgBackground = loadImage("assets/"+random(backs)+".webp", () => {console.log("Background image loaded");everythingLoaded()});
 }
 
 function everythingLoaded() {
