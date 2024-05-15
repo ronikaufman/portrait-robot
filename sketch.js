@@ -30,7 +30,8 @@ TO FIX/DO:
 - loading animation?
 - implement highlight library
 - decide on canvas sizing
-- fix loading (use a checkIfEverythingIsLoaded function as a callback to all loads?)
+- check if resolution is not too low
+- change size of elements depending on face-to-width ratio
 */
 
 //console.log('ml5 version:', ml5.version);
@@ -135,7 +136,7 @@ function bodyPixResults(err, result) {
 
     console.log("bodyPix ready");
     let backgroundMask = result.backgroundMask;
-    backgroundMask.filter(BLUR, 10);
+    backgroundMask.filter(BLUR, 5);
 
     let points = getMaskPolygon(backgroundMask);
     points = convexHull(points);
