@@ -394,7 +394,7 @@ function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, border
     img.mask(myMask);
     myMask.remove();
 
-    let targetBorder = min(targetRad, rad)*borderFactor;
+    let targetBorder = targetRad*borderFactor;
     let ratio = (img.width/img.height)/(width/height);
     
     let dWidth = width*(targetRad+targetBorder)*2*ratio;
