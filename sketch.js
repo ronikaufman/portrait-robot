@@ -27,11 +27,10 @@ POSSIBLE FEATURES:
 
 TO FIX/DO:
 - check if sizing/rotation of face parts is right
-- loading animation?
 - implement highlight library
 - decide on canvas sizing
 - check if resolution is not too low
-- change size of elements depending on face-to-width ratio
+- test if all portraits and backgrounds are right
 */
 
 //console.log('ml5 version:', ml5.version);
@@ -74,10 +73,11 @@ function preload() {
         imgBackground = loadImage("backgrounds/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Background image loaded: " + rows[0].obj.ref);everythingLoaded()});
     });
     bodyPix = ml5.bodyPix(() => {console.log("Body Pix loaded");everythingLoaded()});
+    faceApi = ml5.faceApi(faceApiOptions, () => {console.log("face-api loaded");everythingLoaded()});
 }
 
 function everythingLoaded() {
-    if (loadCount++ < 5) {
+    if (loadCount++ < 6) {
         return;
     }
     console.log("Everything is loaded!");
@@ -162,7 +162,7 @@ function bodyPixResults(err, result) {
 
     image(img, 0, 0);
 
-    faceApi = ml5.faceApi(faceApiOptions, faceApiReady);
+    detectElements();
 }
 
 function getMaskPolygon(mask) {
@@ -283,15 +283,11 @@ function pointInMask(mask, x, y) {
 
 // ********** Face-Api **********
 
-function faceApiReady() {
-    console.log("face-api ready");
-
+function detectElements() {
     faceApi.detectSingle(imgBase, faceApiResultsBase);
     faceApi.detectSingle(imgLeftEye, faceApiResultsLeftEye);
     faceApi.detectSingle(imgRightEye, faceApiResultsRightEye);
     faceApi.detectSingle(imgMouth, faceApiResultsMouth);
-
-    //image(imgBase, 0, 0, width, height);
 }
 
 // BASE CALLBACK
