@@ -31,6 +31,7 @@ TO FIX/DO:
 - decide on canvas sizing
 - check if resolution is not too low
 - test if all portraits and backgrounds are right
+- make face elements smaller if their face-to-width ratio is bigger than the base image's
 */
 
 //console.log('ml5 version:', ml5.version);
