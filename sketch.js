@@ -28,8 +28,6 @@ POSSIBLE FEATURES:
 TO FIX/DO:
 - check if sizing/rotation of face parts is right
 - implement highlight library
-- decide on canvas sizing
-- check if resolution is not too low
 - test if all portraits and backgrounds are right
 - make face elements smaller if their face-to-width ratio is bigger than the base image's
 */
@@ -45,6 +43,12 @@ let imgRightEye;
 let imgMouth;
 let imgBackground;
 
+// because ml5.js doesn't like big pictures
+let imgBaseSmol;
+let imgLeftEyeSmol;
+let imgRightEyeSmol;
+let imgMouthSmol;
+
 let baseSteersLeft;
 let verticesLeftEye;
 let verticesRightEye;
@@ -52,20 +56,29 @@ let verticesMouth;
 
 let loadCount = 0;
 
-// by default all options are set to true
 const faceApiOptions = {
     withLandmarks: true,
-    withDescriptors: false,
+    withDescriptors: false
 }
 
 function preload() {
     loadTable("portraits/data.csv", "ssv", "header", (data) => {
+        let mySeed = ~~random(99999);
+        //mySeed = 92509;
+        //mySeed = 22135;
+        //mySeed = 96484; // 900-901 is the problematic interval for bigWidth
+        randomSeed(mySeed);
+        console.log("Seed: "+mySeed);
         let rows = shuffle(data.rows);
-        //rows[0] = data.rows[data.rows.length-1];
+        rows[1] = data.rows[data.rows.length-1];
         imgBase = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
         imgLeftEye = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
         imgRightEye = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {console.log("Right eye image loaded: " + rows[2].obj.ref);everythingLoaded()});
         imgMouth = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {console.log("Mouth image loaded: " + rows[3].obj.ref);everythingLoaded()});
+        imgBaseSmol = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {everythingLoaded()});
+        imgLeftEyeSmol = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {everythingLoaded()});
+        imgRightEyeSmol = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {everythingLoaded()});
+        imgMouthSmol = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {everythingLoaded()});
     });
     loadTable("backgrounds/data.csv", "ssv", "header", (data) => {
         let rows = shuffle(data.rows);
@@ -78,17 +91,29 @@ function preload() {
 }
 
 function everythingLoaded() {
-    if (loadCount++ < 6) {
+    if (loadCount++ < 10) {
         return;
     }
     console.log("Everything is loaded!");
 
-    let w = 500, h = w*imgBase.height/imgBase.width;
-	resizeCanvas(w, h);
-    imgBase.resize(width, height);
-    imgLeftEye.resize(width, 0);
-    imgRightEye.resize(width, 0);
-    imgMouth.resize(width, 0);
+    let ratio = imgBase.height/imgBase.width;
+    let W = windowWidth, H = windowHeight;
+    if (W*ratio < H) resizeCanvas(W, W*ratio);
+    else resizeCanvas(H/ratio, H);
+    
+    pixelDensity(2);
+
+    let smolWidth = 500;
+    imgBaseSmol.resize(smolWidth, 0);
+    imgLeftEyeSmol.resize(smolWidth, 0);
+    imgRightEyeSmol.resize(smolWidth, 0);
+    imgMouthSmol.resize(smolWidth, 0);
+
+    let bigWidth = 3*width;
+    imgBase.resize(bigWidth, 0);
+    imgLeftEye.resize(bigWidth, 0);
+    imgRightEye.resize(bigWidth, 0);
+    imgMouth.resize(bigWidth, 0);
 
     imgBackground.resize(0, height);
 
@@ -102,11 +127,10 @@ function everythingLoaded() {
     drawingContext.shadowColor = "#00000095";
 
     bodyPix.segment(imgBase, bodyPixResults);
-    //faceApi = ml5.faceApi(faceApiOptions, faceApiReady);
 }
 
 function setup() {
-	createCanvas(500, 500);
+    createCanvas(500, 500);
 
     noLoop();
 
@@ -130,14 +154,13 @@ function draw() {
 
 function bodyPixResults(err, result) {
     if (err) {
-        console.log(imgBase.width, imgBase.height)
         console.log(err);
         return;
     }
 
     console.log("bodyPix ready");
     let backgroundMask = result.backgroundMask;
-    backgroundMask.filter(BLUR, 5);
+    backgroundMask.filter(BLUR, 10);
 
     let points = getMaskPolygon(backgroundMask);
     points = convexHull(points);
@@ -161,7 +184,7 @@ function bodyPixResults(err, result) {
     rotate(random(-1, 1)*0.03);
     translate(-width/2, -height/2);
 
-    image(img, 0, 0);
+    image(img, 0, 0, width, height);
 
     detectElements();
 }
@@ -285,10 +308,15 @@ function pointInMask(mask, x, y) {
 // ********** Face-Api **********
 
 function detectElements() {
-    faceApi.detectSingle(imgBase, faceApiResultsBase);
-    faceApi.detectSingle(imgLeftEye, faceApiResultsLeftEye);
-    faceApi.detectSingle(imgRightEye, faceApiResultsRightEye);
-    faceApi.detectSingle(imgMouth, faceApiResultsMouth);
+    faceApi.detectSingle(imgBaseSmol, faceApiResultsBase);
+    if (random() < 1/2) {
+        faceApi.detectSingle(imgLeftEyeSmol, faceApiResultsLeftEye);
+        faceApi.detectSingle(imgRightEyeSmol, faceApiResultsRightEye);
+    } else {
+        faceApi.detectSingle(imgRightEyeSmol, faceApiResultsRightEye);
+        faceApi.detectSingle(imgLeftEyeSmol, faceApiResultsLeftEye);
+    }
+    faceApi.detectSingle(imgMouthSmol, faceApiResultsMouth);
 }
 
 // BASE CALLBACK
@@ -304,14 +332,14 @@ function faceApiResultsBase(err, result) {
         //drawBox(detectionsBase);
         //drawFaceRect(detectionsBase);
         //drawLandmarks(detectionsBase);
-        console.log("face to width ratio: " + detectionsBase.alignedRect._box._width/width);
-        console.log("aspect ratio: " + width/height);
+        console.log("face to width ratio: " + detectionsBase.alignedRect._box._width/imgBaseSmol.width);
+        console.log("aspect ratio: " + imgBaseSmol.width/imgBaseSmol.height);
         baseSteersLeft = steeringLeft(detectionsBase);
         //console.log("Base image steers left? " + baseSteersLeft);
 
-        verticesLeftEye = normalize(detectionsBase.parts.leftEye, width, height);
-        verticesRightEye = normalize(detectionsBase.parts.rightEye, width, height);
-        verticesMouth = normalize(detectionsBase.parts.mouth, width, height);
+        verticesLeftEye = normalize(detectionsBase.parts.leftEye, imgBaseSmol.width, imgBaseSmol.height);
+        verticesRightEye = normalize(detectionsBase.parts.rightEye, imgBaseSmol.width, imgBaseSmol.height);
+        verticesMouth = normalize(detectionsBase.parts.mouth, imgBaseSmol.width, imgBaseSmol.height);
     }
 }
 
@@ -329,7 +357,7 @@ function faceApiResultsLeftEye(err, result) {
         let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
 
         let part = steersInCorrectWay ? detectionsLeftEye.parts.leftEye : detectionsLeftEye.parts.rightEye;
-        let vertices = normalize(part, imgLeftEye.width, imgLeftEye.height);
+        let vertices = normalize(part, imgLeftEyeSmol.width, imgLeftEyeSmol.height);
         let [centroidLeftEye, radLeftEye, angleLeftEye] = analyzeShape(verticesLeftEye);
         drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, angleLeftEye, 1.5, !steersInCorrectWay);
     }
@@ -347,7 +375,7 @@ function faceApiResultsRightEye(err, result) {
         let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
 
         let part = steersInCorrectWay ? detectionsRightEye.parts.rightEye : detectionsRightEye.parts.leftEye;
-        let vertices = normalize(part, imgRightEye.width, imgRightEye.height);
+        let vertices = normalize(part, imgRightEyeSmol.width, imgRightEyeSmol.height);
         let [centroidRightEye, radRightEye, angleRightEye] = analyzeShape(verticesRightEye);
         drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, angleRightEye, 1.5, !steersInCorrectWay);
     }
@@ -364,7 +392,7 @@ function faceApiResultsMouth(err, result) {
         let thisSteersLeft = steeringLeft(detectionsMouth);
         let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
 
-        let vertices = normalize(detectionsMouth.parts.mouth, imgMouth.width, imgMouth.height);
+        let vertices = normalize(detectionsMouth.parts.mouth, imgMouthSmol.width, imgMouthSmol.height);
         let [centroidMouth, radMouth, angleMouth] = analyzeShape(verticesMouth);
         vertices = convexHull(vertices);
         drawShape(vertices, imgMouth, centroidMouth, radMouth, angleMouth, 0.5, !steersInCorrectWay);
