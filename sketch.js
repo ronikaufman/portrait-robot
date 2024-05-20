@@ -23,7 +23,7 @@ POSSIBLE FEATURES:
 (LOOSE) CRITERIA FOR BACKGROUND IDEAS:
 - landscape
 - no borders
-- no people
+- no people (at least no other faces)
 
 TO FIX/DO:
 - check if sizing/rotation of face parts is right
@@ -54,7 +54,8 @@ let verticesLeftEye;
 let verticesRightEye;
 let verticesMouth;
 
-let loadCount = 0;
+let loadCount = 0, drawCount = 0;
+let traits = {};
 
 const faceApiOptions = {
     withLandmarks: true,
@@ -62,30 +63,42 @@ const faceApiOptions = {
 }
 
 function preload() {
+    let hlRandomSeed = hl.random(1e12);
+    //hlRandomSeed = 0;
+    console.log("Seed: "+hlRandomSeed);
+    randomSeed(hlRandomSeed);
+
     loadTable("portraits/data.csv", "ssv", "header", (data) => {
-        let mySeed = ~~random(99999);
-        //mySeed = 92509;
-        //mySeed = 22135;
-        //mySeed = 96484; // 900-901 is the problematic interval for bigWidth
-        randomSeed(mySeed);
-        console.log("Seed: "+mySeed);
+        console.log("PORTRAITS/DATA LOADED")
         let rows = shuffle(data.rows);
-        rows[1] = data.rows[data.rows.length-1];
+        //rows[0] = data.rows[data.rows.length-1];
+
+        traits["Base portrait"] = rows[0].obj.title;
+        traits["Left eye"] = rows[1].obj.title;
+        traits["Right eye"] = rows[2].obj.title;
+        traits["Mouth"] = rows[3].obj.title;
+
         imgBase = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
         imgLeftEye = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
         imgRightEye = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {console.log("Right eye image loaded: " + rows[2].obj.ref);everythingLoaded()});
         imgMouth = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {console.log("Mouth image loaded: " + rows[3].obj.ref);everythingLoaded()});
+
         imgBaseSmol = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {everythingLoaded()});
         imgLeftEyeSmol = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {everythingLoaded()});
         imgRightEyeSmol = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {everythingLoaded()});
         imgMouthSmol = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {everythingLoaded()});
+
+        loadTable("backgrounds/data.csv", "ssv", "header", (data) => {
+            console.log("BACKGROUNDS/DATA LOADED")
+            let rows = shuffle(data.rows);
+            //rows[0] = data.rows[data.rows.length-1];
+    
+            traits["Background"] = rows[0].obj.title;
+    
+            imgBackground = loadImage("backgrounds/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Background image loaded: " + rows[0].obj.ref);everythingLoaded()});
+        });
     });
-    loadTable("backgrounds/data.csv", "ssv", "header", (data) => {
-        let rows = shuffle(data.rows);
-        //rows[0] = data.rows[data.rows.length-1];
-        console.log(rows[0]);
-        imgBackground = loadImage("backgrounds/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Background image loaded: " + rows[0].obj.ref);everythingLoaded()});
-    });
+    
     bodyPix = ml5.bodyPix(() => {console.log("Body Pix loaded");everythingLoaded()});
     faceApi = ml5.faceApi(faceApiOptions, () => {console.log("face-api loaded");everythingLoaded()});
 }
@@ -96,8 +109,11 @@ function everythingLoaded() {
     }
     console.log("Everything is loaded!");
 
+    hl.token.setTraits(traits);
+
     let ratio = imgBase.height/imgBase.width;
     let W = windowWidth, H = windowHeight;
+    //W = H = 1000
     if (W*ratio < H) resizeCanvas(W, W*ratio);
     else resizeCanvas(H/ratio, H);
     
@@ -123,18 +139,17 @@ function everythingLoaded() {
 
     drawingContext.shadowOffsetX = 0;
     drawingContext.shadowOffsetY = 0;
-    drawingContext.shadowBlur = 5;
+    drawingContext.shadowBlur = width/100;
     drawingContext.shadowColor = "#00000095";
 
-    bodyPix.segment(imgBase, bodyPixResults);
+    bodyPix.segment(imgBaseSmol, bodyPixResults);
 }
 
 function setup() {
-    createCanvas(500, 500);
+    createCanvas(windowWidth, windowHeight);
 
     noLoop();
 
-    //background(0);
     textAlign(CENTER, CENTER);
     textFont("Times New Roman", 16);
     fill(255);
@@ -160,7 +175,8 @@ function bodyPixResults(err, result) {
 
     console.log("bodyPix ready");
     let backgroundMask = result.backgroundMask;
-    backgroundMask.filter(BLUR, 10);
+    backgroundMask.filter(BLUR, imgBaseSmol.width*imgBaseSmol.height/50000);
+    //backgroundMask.drawingContext.filter = "blur(8px)";
 
     let points = getMaskPolygon(backgroundMask);
     points = convexHull(points);
@@ -170,12 +186,11 @@ function bodyPixResults(err, result) {
     myMask.noStroke();
     myMask.beginShape();
     points.forEach((item) => {
-        let x = item[0];
-        let y = item[1];
+        let x = item[0]*img.width/imgBaseSmol.width;
+        let y = item[1]*img.height/imgBaseSmol.height;
         myMask.vertex(x, y);
     })
     myMask.endShape(CLOSE);
-    //myMask.filter(BLUR, 20);
     img.mask(myMask);
     myMask.remove();
 
@@ -192,8 +207,8 @@ function bodyPixResults(err, result) {
 function getMaskPolygon(mask) {
     let points = [];
     
-    // marchin squares algorithm to get the outline(s) of the shape drawn in mask
-    let n = 50;
+    // marching squares algorithm to get the outline(s) of the shape drawn in mask
+    let n = 20;
     let sx = mask.width/n;
     let sy = mask.height/n;
     for (let x = 0; x < mask.width; x += sx) {
@@ -284,18 +299,6 @@ function getMaskPolygon(mask) {
             }
         }
     }
-
-    /*
-    noFill();
-    stroke(0, 0, 255);
-    beginShape();
-    for (let p of points) {
-        vertex(p[0], p[1]);
-    }
-    endShape(CLOSE);
-    */
-
-    //console.log(points);
     
     return points;
 }
@@ -335,7 +338,6 @@ function faceApiResultsBase(err, result) {
         console.log("face to width ratio: " + detectionsBase.alignedRect._box._width/imgBaseSmol.width);
         console.log("aspect ratio: " + imgBaseSmol.width/imgBaseSmol.height);
         baseSteersLeft = steeringLeft(detectionsBase);
-        //console.log("Base image steers left? " + baseSteersLeft);
 
         verticesLeftEye = normalize(detectionsBase.parts.leftEye, imgBaseSmol.width, imgBaseSmol.height);
         verticesRightEye = normalize(detectionsBase.parts.rightEye, imgBaseSmol.width, imgBaseSmol.height);
@@ -410,12 +412,11 @@ function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, border
     vertices.forEach((item) => {
         let theta = atan2(item[1]-centroid[1], item[0]-centroid[0]);
         let r = dist(centroid[0], centroid[1], item[0], item[1]);
-        let x = centroid[0] + (r+border)*cos(theta);
-        let y = centroid[1] + (r+border)*sin(theta);
+        let x = centroid[0] + (r+border)*Math.cos(theta);
+        let y = centroid[1] + (r+border)*Math.sin(theta);
         myMask.vertex(x*img.width, y*img.height);
     })
     myMask.endShape(CLOSE);
-    //myMask.filter(BLUR, 5);
     img.mask(myMask);
     myMask.remove();
 
@@ -439,10 +440,20 @@ function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, border
     rotate(rot);
     if (flipIt) scale(-1, 1);
     translate(-dx-dWidth/2, -dy-dHeight/2);
-    //rect(dx, dy, dWidth, dHeight);
     image(img, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
     pop();
+
+    everythingDrawn();
 } 
+
+function everythingDrawn() {
+    if (drawCount++ < 2) {
+        return;
+    }
+    console.log("Everything is drawn!");
+
+    hl.token.capturePreview();
+}
 
 // UTILITIES
 
@@ -465,11 +476,9 @@ function analyzeShape(vertices) {
     let centroid = [cx, cy];
 
     let maxRad = 0;
-    //let minRad = Infinity;
     for (let item of vertices) {
         let r = dist(cx, cy, item[0], item[1]);
         if (r > maxRad) maxRad = r;
-        //if (r < minRad) minRad = r;
     }
 
     let angle1 = atan2(vertices[0][1]-cy, vertices[0][0]-cx);
