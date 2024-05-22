@@ -72,6 +72,7 @@ function preload() {
         console.log("PORTRAITS/DATA LOADED")
         let rows = shuffle(data.rows);
         //rows[0] = data.rows[data.rows.length-1];
+        rows[0] = data.rows[78];
 
         traits["Base portrait"] = rows[0].obj.title;
         traits["Left eye"] = rows[1].obj.title;
@@ -92,6 +93,7 @@ function preload() {
             console.log("BACKGROUNDS/DATA LOADED")
             let rows = shuffle(data.rows);
             //rows[0] = data.rows[data.rows.length-1];
+            rows[0] = data.rows[72];
     
             traits["Background"] = rows[0].obj.title;
     
@@ -125,7 +127,7 @@ function everythingLoaded() {
     imgRightEyeSmol.resize(smolWidth, 0);
     imgMouthSmol.resize(smolWidth, 0);
 
-    let bigWidth = 3*width;
+    let bigWidth = 4*width;
     imgBase.resize(bigWidth, 0);
     imgLeftEye.resize(bigWidth, 0);
     imgRightEye.resize(bigWidth, 0);
