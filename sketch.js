@@ -7,7 +7,7 @@ POSSIBLE FEATURES:
 - cutting type (collage with shadow, round with blur, bounding rect with no shadow, whole horizontal bands)
 
 (LOOSE) CRITERIA FOR PORTRAITS:
-- face-to-width ratio between 0.2 and 0.4
+- face-to-width ratio between 0.2 and 0.5
 - eyes open, looking toward the "camera"
 - not too dark
 - the face is the main focus
@@ -72,7 +72,6 @@ function preload() {
         console.log("PORTRAITS/DATA LOADED")
         let rows = shuffle(data.rows);
         //rows[0] = data.rows[data.rows.length-1];
-        rows[0] = data.rows[78];
 
         traits["Base portrait"] = rows[0].obj.title;
         traits["Left eye"] = rows[1].obj.title;
@@ -93,7 +92,6 @@ function preload() {
             console.log("BACKGROUNDS/DATA LOADED")
             let rows = shuffle(data.rows);
             //rows[0] = data.rows[data.rows.length-1];
-            rows[0] = data.rows[72];
     
             traits["Background"] = rows[0].obj.title;
     
