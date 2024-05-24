@@ -58,7 +58,7 @@ function preload() {
     console.log("Seed: "+hlRandomSeed);
     randomSeed(hlRandomSeed);
 
-    loadTable("portraits/data.csv", "ssv", "header", (data) => {
+    loadTable("portraits/data.tsv", "header", (data) => {
         console.log("PORTRAITS/DATA LOADED")
         let rows = shuffle(data.rows);
         //rows[0] = data.rows[data.rows.length-1];
@@ -107,6 +107,7 @@ function everythingLoaded() {
     console.log("Everything is loaded!");
 
     hl.token.setTraits(traits);
+    console.log(hl.token.getTraits());
 
     let ratio = imgBase.height/imgBase.width;
     let W = windowWidth, H = windowHeight;
@@ -122,14 +123,14 @@ function everythingLoaded() {
     imgRightEyeSmol.resize(smolWidth, 0);
     imgMouthSmol.resize(smolWidth, 0);
 
-    if (imgBase.width > width) imgBase.resize(width, 0);
-    if (imgBase.height > height) imgBase.resize(0, height);
-    if (imgLeftEye.width > width) imgLeftEye.resize(width, 0);
-    if (imgLeftEye.height > height) imgLeftEye.resize(0, height);
-    if (imgRightEye.width > width) imgRightEye.resize(width, 0);
-    if (imgRightEye.height > height) imgRightEye.resize(0, height);
-    if (imgMouth.width > width) imgMouth.resize(width, 0);
-    if (imgMouth.height > height) imgMouth.resize(0, height);
+    if (imgBase.width < width) imgBase.resize(width, 0);
+    if (imgBase.height < height) imgBase.resize(0, height);
+    if (imgLeftEye.width < width) imgLeftEye.resize(width, 0);
+    if (imgLeftEye.height < height) imgLeftEye.resize(0, height);
+    if (imgRightEye.width < width) imgRightEye.resize(width, 0);
+    if (imgRightEye.height < height) imgRightEye.resize(0, height);
+    if (imgMouth.width < width) imgMouth.resize(width, 0);
+    if (imgMouth.height < height) imgMouth.resize(0, height);
 
     imgBackground.resize(0, height);
 
