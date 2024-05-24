@@ -1,11 +1,4 @@
 /*
-IDEAS:
-- add nose
-
-POSSIBLE FEATURES:
-- same/different eyes/features
-- cutting type (collage with shadow, round with blur, bounding rect with no shadow, whole horizontal bands)
-
 (LOOSE) CRITERIA FOR PORTRAITS:
 - face-to-width ratio between 0.2 and 0.5
 - eyes open, looking toward the "camera"
@@ -27,12 +20,10 @@ POSSIBLE FEATURES:
 
 TO FIX/DO:
 - check if sizing/rotation of face parts is right
-- implement highlight library
-- test if all portraits and backgrounds are right
+- test if all portraits and backgrounds are right and copyright-free
 - make face elements smaller if their face-to-width ratio is bigger than the base image's
+- check if ";"s in artwork names are problematic (eg Van Gogh's)
 */
-
-//console.log('ml5 version:', ml5.version);
 
 let bodyPix;
 let faceApi;
@@ -43,7 +34,6 @@ let imgRightEye;
 let imgMouth;
 let imgBackground;
 
-// because ml5.js doesn't like big pictures
 let imgBaseSmol;
 let imgLeftEyeSmol;
 let imgRightEyeSmol;
@@ -73,10 +63,17 @@ function preload() {
         let rows = shuffle(data.rows);
         //rows[0] = data.rows[data.rows.length-1];
 
-        traits["Base portrait"] = rows[0].obj.title;
-        traits["Left eye"] = rows[1].obj.title;
-        traits["Right eye"] = rows[2].obj.title;
-        traits["Mouth"] = rows[3].obj.title;
+        traits["Base portrait"] = rows[0].obj.title + ", " + rows[0].obj.artist;
+        traits["Left eye"] = rows[1].obj.title + ", " + rows[1].obj.artist;
+        traits["Right eye"] = rows[2].obj.title + ", " + rows[2].obj.artist;
+        traits["Mouth"] = rows[3].obj.title + ", " + rows[3].obj.artist;
+
+        /*
+        for (let i = 0; i < data.rows.length; i++) {
+            let row = data.rows[i];
+            loadImage("portraits/"+row.obj.ref+"."+row.obj.extension, () => {console.log("good: " + row.obj.ref)}, (err) => {console.log("😱 ERROR 😱: " + row.obj.ref);});
+        }
+        */
 
         imgBase = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
         imgLeftEye = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
@@ -93,7 +90,7 @@ function preload() {
             let rows = shuffle(data.rows);
             //rows[0] = data.rows[data.rows.length-1];
     
-            traits["Background"] = rows[0].obj.title;
+            traits["Background"] = rows[0].obj.title + ", " + rows[0].obj.artist;
     
             imgBackground = loadImage("backgrounds/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Background image loaded: " + rows[0].obj.ref);everythingLoaded()});
         });
@@ -125,11 +122,14 @@ function everythingLoaded() {
     imgRightEyeSmol.resize(smolWidth, 0);
     imgMouthSmol.resize(smolWidth, 0);
 
-    let bigWidth = 4*width;
-    imgBase.resize(bigWidth, 0);
-    imgLeftEye.resize(bigWidth, 0);
-    imgRightEye.resize(bigWidth, 0);
-    imgMouth.resize(bigWidth, 0);
+    if (imgBase.width > width) imgBase.resize(width, 0);
+    if (imgBase.height > height) imgBase.resize(0, height);
+    if (imgLeftEye.width > width) imgLeftEye.resize(width, 0);
+    if (imgLeftEye.height > height) imgLeftEye.resize(0, height);
+    if (imgRightEye.width > width) imgRightEye.resize(width, 0);
+    if (imgRightEye.height > height) imgRightEye.resize(0, height);
+    if (imgMouth.width > width) imgMouth.resize(width, 0);
+    if (imgMouth.height > height) imgMouth.resize(0, height);
 
     imgBackground.resize(0, height);
 
@@ -207,7 +207,6 @@ function bodyPixResults(err, result) {
 function getMaskPolygon(mask) {
     let points = [];
     
-    // marching squares algorithm to get the outline(s) of the shape drawn in mask
     let n = 20;
     let sx = mask.width/n;
     let sy = mask.height/n;
@@ -332,9 +331,6 @@ function faceApiResultsBase(err, result) {
     let detectionsBase = result;
 
     if (detectionsBase) {
-        //drawBox(detectionsBase);
-        //drawFaceRect(detectionsBase);
-        //drawLandmarks(detectionsBase);
         console.log("face to width ratio: " + detectionsBase.alignedRect._box._width/imgBaseSmol.width);
         console.log("aspect ratio: " + imgBaseSmol.width/imgBaseSmol.height);
         baseSteersLeft = steeringLeft(detectionsBase);
@@ -532,130 +528,4 @@ function steeringLeft(detections) {
     let distToLeftEye = centroidLeftEye[0] - _x;
     let distToRightEye = _x+_width - centroidRightEye[0];
     return distToLeftEye < distToRightEye;
-}
-
-// OTHER STUFF
-
-function faceApiResults(err, result) {
-    if (err) {
-        console.log(err)
-        return
-    }
-    // console.log(result)
-    detections = result;
-
-    // background(220);
-    background(255);
-    image(img, 0, 0, width, height);
-    if (detections) {
-        // console.log(detections);
-        blendMode(DIFFERENCE);
-        //drawBox(detections);
-        drawLandmarks(detections);
-    }
-}
-
-/*
-function drawLandmarks(detections) {
-    let landmarks = detections.landmarks._positions;
-    for (let lm of landmarks) {
-        circle(lm._x, lm._y, 5);
-    }
-}
-*/
-
-function drawBox(detections) {
-    let alignedRect = detections.alignedRect;
-    let {_x, _y, _width, _height} = alignedRect._box;
-    rect(_x, _y, _width, _height);
-}
-
-function drawFaceRect(detections) {
-    let alignedRect = detections.alignedRect;
-    let {_x, _y, _width, _height} = alignedRect._box;
-    //_x = 0;
-    //_width = width;
-
-    //scale(width/_width)
-    //translate(-_x, -_y);
-    image(imgBase, _x, _y, _width, _height, _x, _y, _width, _height);
-}
-
-function drawLandmarks(detections) {
-    push();
-
-    noFill();
-    stroke(0, 255, 0);
-    strokeWeight(2);
-
-    // mouth
-    beginShape();
-    detections.parts.mouth.forEach(item => {
-        vertex(item._x, item._y);
-    })
-    endShape(CLOSE);
-
-    // nose
-    beginShape();
-    detections.parts.nose.forEach(item => {
-        vertex(item._x, item._y);
-    })
-    endShape(CLOSE);
-
-    // left eye
-    beginShape();
-    detections.parts.leftEye.forEach(item => {
-        vertex(item._x, item._y);
-    })
-    endShape(CLOSE);
-
-    // right eye
-    beginShape();
-    detections.parts.rightEye.forEach(item => {
-        vertex(item._x, item._y);
-    })
-    endShape(CLOSE);
-
-    // right eyebrow
-    beginShape();
-    detections.parts.rightEyeBrow.forEach(item => {
-        vertex(item._x, item._y);
-    })
-    endShape();
-
-    // left eyebrow
-    beginShape();
-    detections.parts.leftEyeBrow.forEach(item => {
-        vertex(item._x, item._y);
-    })
-    endShape();
-
-    pop();
-}
-
-function sobelFilter(img) {
-    noStroke();
-    //colorMode(HSB, PI, 255, 255);
-    let step = 1;
-    for (let x = step; x < img.width-step; x += step) {
-        for (let y = step; y < img.height-step; y += step) {
-            let tl = brightness(img.get(x-step, y-step)); // top left
-            let l = brightness(img.get(x-step, y)); // left
-            let bl = brightness(img.get(x-step, y+step)); // bottom left
-            let t = brightness(img.get(x, y-step)); // top
-            let b = brightness(img.get(x, y+step)); // bottom
-            let tr = brightness(img.get(x+step, y-step)); // top right
-            let r = brightness(img.get(x+step, y)); // right
-            let br = brightness(img.get(x+step, y+step)); // bottom right
-          
-            let Gx = tl + 2*l + bl - tr - 2*r - br;
-            let Gy = tl + 2*t + tr - bl - 2*b - br;
-            let Gz = sqrt(sq(Gx)+sq(Gy));
-            let theta = atan(Gy/Gx);
-          
-            //fill(PI/2, 255, Gz); 
-            fill(0, 255, 255, Gz); 
-            square(x, y, step);
-        }
-    }
 }
