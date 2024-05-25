@@ -85,7 +85,7 @@ function preload() {
         imgRightEyeSmol = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {everythingLoaded()});
         imgMouthSmol = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {everythingLoaded()});
 
-        loadTable("backgrounds/data.csv", "ssv", "header", (data) => {
+        loadTable("backgrounds/data.tsv", "header", (data) => {
             console.log("BACKGROUNDS/DATA LOADED")
             let rows = shuffle(data.rows);
             //rows[0] = data.rows[data.rows.length-1];
