@@ -19,33 +19,21 @@
 - no people (at least no other faces)
 
 TO FIX/DO:
-- check if sizing/rotation of face parts is right
 - test if all portraits and backgrounds are right and copyright-free
-- make face elements smaller if their face-to-width ratio is bigger than the base image's
-- check if ";"s in artwork names are problematic (eg Van Gogh's)
+- responsive
 */
 
-let bodyPix;
-let faceApi;
+let bodyPixBase;
+let faceApiBase;
+let faceApiLeftEye;
+let faceApiRightEye;
+let faceApiMouth;
 
 let imgBase;
 let imgLeftEye;
 let imgRightEye;
 let imgMouth;
 let imgBackground;
-
-let imgBaseSmol;
-let imgLeftEyeSmol;
-let imgRightEyeSmol;
-let imgMouthSmol;
-
-let baseSteersLeft;
-let verticesLeftEye;
-let verticesRightEye;
-let verticesMouth;
-
-let loadCount = 0, drawCount = 0;
-let traits = {};
 
 const faceApiOptions = {
     withLandmarks: true,
@@ -58,70 +46,42 @@ function preload() {
     console.log("Seed: "+hlRandomSeed);
     randomSeed(hlRandomSeed);
 
-    loadTable("portraits/data.tsv", "header", (data) => {
-        console.log("PORTRAITS/DATA LOADED")
-        let rows = shuffle(data.rows);
-        //rows[0] = data.rows[data.rows.length-1];
+    shuffle(portraits_data, true);
+    let baseId = portraits_data[0], leftEyeId = portraits_data[1], rightEyeId = portraits_data[2], mouthId = portraits_data[3];
 
-        traits["Base portrait"] = rows[0].obj.title + ", " + rows[0].obj.artist;
-        traits["Left eye"] = rows[1].obj.title + ", " + rows[1].obj.artist;
-        traits["Right eye"] = rows[2].obj.title + ", " + rows[2].obj.artist;
-        traits["Mouth"] = rows[3].obj.title + ", " + rows[3].obj.artist;
+    let backgroundId = random(backgrounds_data);
 
-        /*
-        for (let i = 0; i < data.rows.length; i++) {
-            let row = data.rows[i];
-            loadImage("portraits/"+row.obj.ref+"."+row.obj.extension, () => {console.log("good: " + row.obj.ref)}, (err) => {console.log("😱 ERROR 😱: " + row.obj.ref);});
-        }
-        */
-
-        imgBase = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Base image loaded: " + rows[0].obj.ref);everythingLoaded()});
-        imgLeftEye = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {console.log("Left eye image loaded: " + rows[1].obj.ref);everythingLoaded()});
-        imgRightEye = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {console.log("Right eye image loaded: " + rows[2].obj.ref);everythingLoaded()});
-        imgMouth = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {console.log("Mouth image loaded: " + rows[3].obj.ref);everythingLoaded()});
-
-        imgBaseSmol = loadImage("portraits/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {everythingLoaded()});
-        imgLeftEyeSmol = loadImage("portraits/"+rows[1].obj.ref+"."+rows[1].obj.extension, () => {everythingLoaded()});
-        imgRightEyeSmol = loadImage("portraits/"+rows[2].obj.ref+"."+rows[2].obj.extension, () => {everythingLoaded()});
-        imgMouthSmol = loadImage("portraits/"+rows[3].obj.ref+"."+rows[3].obj.extension, () => {everythingLoaded()});
-
-        loadTable("backgrounds/data.tsv", "header", (data) => {
-            console.log("BACKGROUNDS/DATA LOADED")
-            let rows = shuffle(data.rows);
-            //rows[0] = data.rows[data.rows.length-1];
-    
-            traits["Background"] = rows[0].obj.title + ", " + rows[0].obj.artist;
-    
-            imgBackground = loadImage("backgrounds/"+rows[0].obj.ref+"."+rows[0].obj.extension, () => {console.log("Background image loaded: " + rows[0].obj.ref);everythingLoaded()});
-        });
+    hl.token.setTraits({
+        "Base portrait": baseId[2] + ", " + baseId[3],
+        "Left eye": leftEyeId[2] + ", " + leftEyeId[3],
+        "Right eye": rightEyeId[2] + ", " + rightEyeId[3],
+        "Mouth": mouthId[2] + ", " + mouthId[3],
+        "Background": backgroundId[2] + ", " + backgroundId[3]
     });
-    
-    bodyPix = ml5.bodyPix(() => {console.log("Body Pix loaded");everythingLoaded()});
-    faceApi = ml5.faceApi(faceApiOptions, () => {console.log("face-api loaded");everythingLoaded()});
+
+    imgBase = loadImage("portraits/"+baseId[0]+"."+baseId[1], () => console.log("Base portrait: " + baseId[2] + ", " + baseId[3]));
+    imgLeftEye = loadImage("portraits/"+leftEyeId[0]+"."+leftEyeId[1], () => console.log("Left eye: " + leftEyeId[2] + ", " + leftEyeId[3]));
+    imgRightEye = loadImage("portraits/"+rightEyeId[0]+"."+rightEyeId[1], () => console.log("Right eye: " + rightEyeId[2] + ", " + rightEyeId[3]));
+    imgMouth = loadImage("portraits/"+mouthId[0]+"."+mouthId[1], () => console.log("Mouth: " + mouthId[2] + ", " + mouthId[3]));
+
+    bodyPixBase = loadJSON("ml/bodyPix_"+baseId[0]+".json");
+    faceApiBase = loadJSON("ml/faceApi_"+baseId[0]+".json");
+    faceApiLeftEye = loadJSON("ml/faceApi_"+leftEyeId[0]+".json");
+    faceApiRightEye = loadJSON("ml/faceApi_"+rightEyeId[0]+".json");
+    faceApiMouth = loadJSON("ml/faceApi_"+mouthId[0]+".json");
+
+    imgBackground = loadImage("backgrounds/"+backgroundId[0]+"."+backgroundId[1], () => console.log("Background: " + backgroundId[2] + ", " + backgroundId[3]));
 }
 
-function everythingLoaded() {
-    if (loadCount++ < 10) {
-        return;
-    }
-    console.log("Everything is loaded!");
-
-    hl.token.setTraits(traits);
-    console.log(hl.token.getTraits());
-
+function setup() {
     let ratio = imgBase.height/imgBase.width;
     let W = windowWidth, H = windowHeight;
     //W = H = 1000
-    if (W*ratio < H) resizeCanvas(W, W*ratio);
-    else resizeCanvas(H/ratio, H);
-    
-    pixelDensity(2);
+    if (W*ratio < H) createCanvas(W, W*ratio);
+    else createCanvas(H/ratio, H);
 
-    let smolWidth = 500;
-    imgBaseSmol.resize(smolWidth, 0);
-    imgLeftEyeSmol.resize(smolWidth, 0);
-    imgRightEyeSmol.resize(smolWidth, 0);
-    imgMouthSmol.resize(smolWidth, 0);
+    pixelDensity(2);
+    noLoop();
 
     if (imgBase.width < width) imgBase.resize(width, 0);
     if (imgBase.height < height) imgBase.resize(0, height);
@@ -134,8 +94,6 @@ function everythingLoaded() {
 
     imgBackground.resize(0, height);
 
-    console.log("Resizing done: "+width+" "+height);
-
     image(imgBackground, random(width-imgBackground.width), 0);
 
     drawingContext.shadowOffsetX = 0;
@@ -143,54 +101,25 @@ function everythingLoaded() {
     drawingContext.shadowBlur = width/100;
     drawingContext.shadowColor = "#00000095";
 
-    bodyPix.segment(imgBaseSmol, bodyPixResults);
+    cutOutline();
+    drawFacialFeatures();
+    hl.token.capturePreview();
 }
 
-function setup() {
-    createCanvas(windowWidth, windowHeight);
+// BACKGROUND
 
-    noLoop();
-
-    textAlign(CENTER, CENTER);
-    textFont("Times New Roman", 16);
-    fill(255);
-    noStroke();
-    text("loading...", width/2, height/2);
-
-    console.log("Setup done");
-}
-
-/*
-function draw() {
-    
-}
-*/
-
-// ********** BodyPix **********
-
-function bodyPixResults(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-
-    console.log("bodyPix ready");
-    let backgroundMask = result.backgroundMask;
-    backgroundMask.filter(BLUR, imgBaseSmol.width*imgBaseSmol.height/50000);
-    //backgroundMask.drawingContext.filter = "blur(8px)";
-
-    let points = getMaskPolygon(backgroundMask);
-    points = convexHull(points);
+function cutOutline() {
+    let points = Object.entries(bodyPixBase);
     let img = imgBase.get();
     let myMask = createGraphics(img.width, img.height);
     myMask.fill(0);
     myMask.noStroke();
     myMask.beginShape();
-    points.forEach((item) => {
-        let x = item[0]*img.width/imgBaseSmol.width;
-        let y = item[1]*img.height/imgBaseSmol.height;
+    for (let item of points) {
+        let x = item[1][0]*img.width;
+        let y = item[1][1]*img.height;
         myMask.vertex(x, y);
-    })
+    }
     myMask.endShape(CLOSE);
     img.mask(myMask);
     myMask.remove();
@@ -201,201 +130,43 @@ function bodyPixResults(err, result) {
     translate(-width/2, -height/2);
 
     image(img, 0, 0, width, height);
-
-    detectElements();
 }
 
-function getMaskPolygon(mask) {
-    let points = [];
-    
-    let n = 20;
-    let sx = mask.width/n;
-    let sy = mask.height/n;
-    for (let x = 0; x < mask.width; x += sx) {
-        for (let y = 0; y < mask.height; y += sy) {
-            let inNW = pointInMask(mask, x, y);
-            let inNE = pointInMask(mask, x+sx, y);
-            let inSE = pointInMask(mask, x+sx, y+sy);
-            let inSW = pointInMask(mask, x, y+sy);
-            if (!inNW && inNE && inSE && inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy]);
-                points.push([x, y+sy]);
-                points.push([x, y+sy/2]);
-            } else if (inNW && !inNE && inSE && inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx, y+sy/2]);
-                points.push([x+sx, y+sy]);
-                points.push([x, y+sy]);
-                points.push([x, y]);
-            } else if (inNW && inNE && !inSE && inSW) {
-                points.push([x+sx, y+sy/2]);
-                points.push([x+sx/2, y+sy]);
-                points.push([x, y+sy]);
-                points.push([x, y]);
-                points.push([x+sx, y]);
-            } else if (inNW && inNE && inSE && !inSW) {
-                points.push([x, y+sy/2]);
-                points.push([x, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy]);
-                points.push([x+sx/2, y+sy]);
-            } else if (!inNW && !inNE && inSE && inSW) {
-                points.push([x, y+sy/2]);
-                points.push([x+sx, y+sy/2]);
-                points.push([x+sx, y+sy]);
-                points.push([x, y+sy]);
-            } else if (inNW && !inNE && !inSE && inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx/2, y+sy]);
-                points.push([x, y+sy]);
-                points.push([x, y]);
-            } else if (inNW && inNE && !inSE && !inSW) {
-                points.push([x, y+sy/2]);
-                points.push([x, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy/2]);
-            } else if (!inNW && inNE && inSE && !inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy]);
-                points.push([x+sx/2, y+sy]);
-            } else if (inNW && !inNE && !inSE && !inSW) {
-                points.push([x, y]);
-                points.push([x+sx/2, y]);
-                points.push([x, y+sy/2]);
-            } else if (!inNW && inNE && !inSE && !inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy/2]);
-            } else if (!inNW && !inNE && inSE && !inSW) {
-                points.push([x+sx, y+sy]);
-                points.push([x+sx/2, y+sy]);
-                points.push([x+sx, y+sy/2]);
-            } else if (!inNW && !inNE && !inSE && inSW) {
-                points.push([x+sx/2, y+sy]);
-                points.push([x, y+sy]);
-                points.push([x, y+sy/2]);
-            } else if (!inNW && inNE && !inSE && inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy/2]);
-                points.push([x+sx/2, y+sy]);
-                points.push([x, y+sy]);
-                points.push([x, y+sy/2]);
-            } else if (inNW && !inNE && inSE && !inSW) {
-                points.push([x+sx/2, y]);
-                points.push([x+sx, y+sy/2]);
-                points.push([x+sx, y+sy]);
-                points.push([x+sx/2, y+sy]);
-                points.push([x, y+sy/2]);
-                points.push([x, y]);
-            } else if (inNW && inNE && inSE && inSW) {
-                points.push([x, y]);
-                points.push([x+sx, y]);
-                points.push([x+sx, y+sy]);
-                points.push([x, y+sy]);
-            }
-        }
-    }
-    
-    return points;
-}
+// PORTRAIT
 
-function pointInMask(mask, x, y) {
-    let col = mask.get(x, y);
-    return col[3] > 0;
-}
-
-// ********** Face-Api **********
-
-function detectElements() {
-    faceApi.detectSingle(imgBaseSmol, faceApiResultsBase);
+function drawFacialFeatures() {
     if (random() < 1/2) {
-        faceApi.detectSingle(imgLeftEyeSmol, faceApiResultsLeftEye);
-        faceApi.detectSingle(imgRightEyeSmol, faceApiResultsRightEye);
+        drawLeftEye();
+        drawRightEye();
     } else {
-        faceApi.detectSingle(imgRightEyeSmol, faceApiResultsRightEye);
-        faceApi.detectSingle(imgLeftEyeSmol, faceApiResultsLeftEye);
+        drawRightEye();
+        drawLeftEye();
     }
-    faceApi.detectSingle(imgMouthSmol, faceApiResultsMouth);
+    drawMouth();
 }
 
-// BASE CALLBACK
+function drawLeftEye() {
+    let steersInCorrectWay = (faceApiLeftEye.steersLeft == faceApiBase.steersLeft);
 
-function faceApiResultsBase(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-    let detectionsBase = result;
-
-    if (detectionsBase) {
-        console.log("face to width ratio: " + detectionsBase.alignedRect._box._width/imgBaseSmol.width);
-        console.log("aspect ratio: " + imgBaseSmol.width/imgBaseSmol.height);
-        baseSteersLeft = steeringLeft(detectionsBase);
-
-        verticesLeftEye = normalize(detectionsBase.parts.leftEye, imgBaseSmol.width, imgBaseSmol.height);
-        verticesRightEye = normalize(detectionsBase.parts.rightEye, imgBaseSmol.width, imgBaseSmol.height);
-        verticesMouth = normalize(detectionsBase.parts.mouth, imgBaseSmol.width, imgBaseSmol.height);
-    }
+    let vertices = steersInCorrectWay ? faceApiLeftEye.leftEye : faceApiLeftEye.rightEye;
+    let [centroidLeftEye, radLeftEye, angleLeftEye] = analyzeShape(faceApiBase.leftEye);
+    drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, angleLeftEye, 1.5, !steersInCorrectWay);
 }
 
-// PARTS CALLBACKS & DRAWING
+function drawRightEye() {
+    let steersInCorrectWay = (faceApiRightEye.steersLeft == faceApiBase.steersLeft);
 
-function faceApiResultsLeftEye(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-    let detectionsLeftEye = result;
-
-    if (detectionsLeftEye) {
-        let thisSteersLeft = steeringLeft(detectionsLeftEye);
-        let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
-
-        let part = steersInCorrectWay ? detectionsLeftEye.parts.leftEye : detectionsLeftEye.parts.rightEye;
-        let vertices = normalize(part, imgLeftEyeSmol.width, imgLeftEyeSmol.height);
-        let [centroidLeftEye, radLeftEye, angleLeftEye] = analyzeShape(verticesLeftEye);
-        drawShape(vertices, imgLeftEye, centroidLeftEye, radLeftEye, angleLeftEye, 1.5, !steersInCorrectWay);
-    }
+    let vertices = steersInCorrectWay ? faceApiRightEye.rightEye : faceApiRightEye.leftEye;
+    let [centroidRightEye, radRightEye, angleRightEye] = analyzeShape(faceApiBase.rightEye);
+    drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, angleRightEye, 1.5, !steersInCorrectWay);
 }
 
-function faceApiResultsRightEye(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-    let detectionsRightEye = result;
+function drawMouth() {
+    let steersInCorrectWay = (faceApiMouth.steersLeft == faceApiBase.steersLeft);
 
-    if (detectionsRightEye) {
-        let thisSteersLeft = steeringLeft(detectionsRightEye);
-        let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
-
-        let part = steersInCorrectWay ? detectionsRightEye.parts.rightEye : detectionsRightEye.parts.leftEye;
-        let vertices = normalize(part, imgRightEyeSmol.width, imgRightEyeSmol.height);
-        let [centroidRightEye, radRightEye, angleRightEye] = analyzeShape(verticesRightEye);
-        drawShape(vertices, imgRightEye, centroidRightEye, radRightEye, angleRightEye, 1.5, !steersInCorrectWay);
-    }
-}
-
-function faceApiResultsMouth(err, result) {
-    if (err) {
-        console.log(err);
-        return;
-    }
-    let detectionsMouth = result;
-
-    if (detectionsMouth) {
-        let thisSteersLeft = steeringLeft(detectionsMouth);
-        let steersInCorrectWay = (thisSteersLeft == baseSteersLeft);
-
-        let vertices = normalize(detectionsMouth.parts.mouth, imgMouthSmol.width, imgMouthSmol.height);
-        let [centroidMouth, radMouth, angleMouth] = analyzeShape(verticesMouth);
-        vertices = convexHull(vertices);
-        drawShape(vertices, imgMouth, centroidMouth, radMouth, angleMouth, 0.5, !steersInCorrectWay);
-    }
+    let vertices = convexHull(faceApiMouth.mouth);
+    let [centroidMouth, radMouth, angleMouth] = analyzeShape(convexHull(faceApiBase.mouth));
+    drawShape(vertices, imgMouth, centroidMouth, radMouth, angleMouth, 0.5, !steersInCorrectWay);
 }
 
 function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, borderFactor, flipIt) {
@@ -439,94 +210,4 @@ function drawShape(vertices, img, targetCentroid, targetRad, targetAngle, border
     translate(-dx-dWidth/2, -dy-dHeight/2);
     image(img, dx, dy, dWidth, dHeight, sx, sy, sWidth, sHeight);
     pop();
-
-    everythingDrawn();
-} 
-
-function everythingDrawn() {
-    if (drawCount++ < 2) {
-        return;
-    }
-    console.log("Everything is drawn!");
-
-    hl.token.capturePreview();
-}
-
-// UTILITIES
-
-function normalize(vertices, w, h) {
-    let newVertices = [];
-    vertices.forEach(item => {
-        newVertices.push([item._x/w, item._y/h]);
-    })
-    return newVertices;
-}
-
-function analyzeShape(vertices) {
-    let cx = 0, cy = 0;
-    for (let item of vertices) {
-        cx += item[0];
-        cy += item[1];
-    }
-    cx /= vertices.length;
-    cy /= vertices.length;
-    let centroid = [cx, cy];
-
-    let maxRad = 0;
-    for (let item of vertices) {
-        let r = dist(cx, cy, item[0], item[1]);
-        if (r > maxRad) maxRad = r;
-    }
-
-    let angle1 = atan2(vertices[0][1]-cy, vertices[0][0]-cx);
-    let angle2 = atan2(vertices[1][1]-cy, vertices[1][0]-cx);
-
-    return [centroid, maxRad, (angle1+angle2)/2];
-}
-
-function convexHull(points) {
-    // adapted from https://en.wikipedia.org/wiki/Gift_wrapping_algorithm#Pseudocode
-    points.sort((p, q) => p[0] - q[0]);
-    let hull = [];
-    let i = 0;
-    let endPoint;
-    let pointOnHull = points[0];
-    do {
-        hull.push(pointOnHull);
-        endPoint = points[0];
-        for (let j = 0; j < points.length; j++) {
-            let p = createVector(endPoint[0]-pointOnHull[0], endPoint[1]-pointOnHull[1]);
-            let q = createVector(points[j][0]-pointOnHull[0], points[j][1]-pointOnHull[1]);
-            if (pointsAreEqual(endPoint, pointOnHull) || (p.cross(q)).z < 0) {
-                endPoint = points[j];
-            }
-        }
-        i++;
-        pointOnHull = endPoint;
-    } while (!pointsAreEqual(endPoint, points[0]));
-	return hull;
-}
-
-function pointsAreEqual(a, b) {
-    return a[0] == b[0] && a[1] == b[1];
-}
-
-function getCentroid(part) {
-    let cx = 0, cy = 0;
-    for (let item of part) {
-        cx += item._x;
-        cy += item._y;
-    }
-    cx /= part.length;
-    cy /= part.length;
-    return [cx, cy];
-}
-
-function steeringLeft(detections) {
-    let centroidLeftEye = getCentroid(detections.parts.leftEye);
-    let centroidRightEye = getCentroid(detections.parts.rightEye);
-    let {_x, _y, _width, _height} = detections.alignedRect._box;
-    let distToLeftEye = centroidLeftEye[0] - _x;
-    let distToRightEye = _x+_width - centroidRightEye[0];
-    return distToLeftEye < distToRightEye;
 }
