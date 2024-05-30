@@ -1,28 +1,3 @@
-/*
-(LOOSE) CRITERIA FOR PORTRAITS:
-- face-to-width ratio between 0.2 and 0.5
-- eyes open, looking toward the "camera"
-- not too dark
-- the face is the main focus
-- lips visible, no thick moustaches
-- not too blurry
-- face is straight up, not oblique
-- vertical
-- nothing in front of the face (hands, etc.)
-- no miniatures, no border/frame
-- only 1 person
-- no text
-
-(LOOSE) CRITERIA FOR BACKGROUND IDEAS:
-- landscape
-- no borders
-- no people (at least no other faces)
-
-TO FIX/DO:
-- test if all portraits and backgrounds are right and copyright-free
-- responsive
-*/
-
 let bodyPixBase;
 let faceApiBase;
 let faceApiLeftEye;
@@ -42,8 +17,6 @@ const faceApiOptions = {
 
 function preload() {
     let hlRandomSeed = hl.random(1e12);
-    //hlRandomSeed = 0;
-    console.log("Seed: "+hlRandomSeed);
     randomSeed(hlRandomSeed);
 
     shuffle(portraits_data, true);
@@ -76,7 +49,6 @@ function preload() {
 function setup() {
     let ratio = imgBase.height/imgBase.width;
     let W = windowWidth, H = windowHeight;
-    //W = H = 1000
     if (W*ratio < H) createCanvas(W, W*ratio);
     else createCanvas(H/ratio, H);
 
