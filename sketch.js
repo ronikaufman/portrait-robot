@@ -10,12 +10,16 @@ let imgRightEye;
 let imgMouth;
 let imgBackground;
 
+let loadCount = 0;
+
 const faceApiOptions = {
     withLandmarks: true,
     withDescriptors: false
 }
 
-function preload() {
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+
     let hlRandomSeed = hl.random(1e12);
     randomSeed(hlRandomSeed);
 
@@ -24,58 +28,77 @@ function preload() {
 
     let backgroundId = random(backgrounds_data);
 
-    hl.token.setTraits({
-        "Base portrait": baseId[2] + ", " + baseId[3],
-        "Left eye": leftEyeId[2] + ", " + leftEyeId[3],
-        "Right eye": rightEyeId[2] + ", " + rightEyeId[3],
-        "Mouth": mouthId[2] + ", " + mouthId[3],
-        "Background": backgroundId[2] + ", " + backgroundId[3]
-    });
+    imgBase = loadImage("portraits/"+baseId[0]+"."+baseId[1], () => {console.log("Base portrait: " + baseId[2] + ", " + baseId[3]); loadCount++});
+    imgLeftEye = loadImage("portraits/"+leftEyeId[0]+"."+leftEyeId[1], () => {console.log("Left eye: " + leftEyeId[2] + ", " + leftEyeId[3]); loadCount++});
+    imgRightEye = loadImage("portraits/"+rightEyeId[0]+"."+rightEyeId[1], () => {console.log("Right eye: " + rightEyeId[2] + ", " + rightEyeId[3]); loadCount++});
+    imgMouth = loadImage("portraits/"+mouthId[0]+"."+mouthId[1], () => {console.log("Mouth: " + mouthId[2] + ", " + mouthId[3]); loadCount++});
 
-    imgBase = loadImage("portraits/"+baseId[0]+"."+baseId[1], () => console.log("Base portrait: " + baseId[2] + ", " + baseId[3]));
-    imgLeftEye = loadImage("portraits/"+leftEyeId[0]+"."+leftEyeId[1], () => console.log("Left eye: " + leftEyeId[2] + ", " + leftEyeId[3]));
-    imgRightEye = loadImage("portraits/"+rightEyeId[0]+"."+rightEyeId[1], () => console.log("Right eye: " + rightEyeId[2] + ", " + rightEyeId[3]));
-    imgMouth = loadImage("portraits/"+mouthId[0]+"."+mouthId[1], () => console.log("Mouth: " + mouthId[2] + ", " + mouthId[3]));
+    bodyPixBase = loadJSON("ml/bodyPix_"+baseId[0]+".json", () => loadCount++);
+    faceApiBase = loadJSON("ml/faceApi_"+baseId[0]+".json", () => loadCount++);
+    faceApiLeftEye = loadJSON("ml/faceApi_"+leftEyeId[0]+".json", () => loadCount++);
+    faceApiRightEye = loadJSON("ml/faceApi_"+rightEyeId[0]+".json", () => loadCount++);
+    faceApiMouth = loadJSON("ml/faceApi_"+mouthId[0]+".json", () => loadCount++);
 
-    bodyPixBase = loadJSON("ml/bodyPix_"+baseId[0]+".json");
-    faceApiBase = loadJSON("ml/faceApi_"+baseId[0]+".json");
-    faceApiLeftEye = loadJSON("ml/faceApi_"+leftEyeId[0]+".json");
-    faceApiRightEye = loadJSON("ml/faceApi_"+rightEyeId[0]+".json");
-    faceApiMouth = loadJSON("ml/faceApi_"+mouthId[0]+".json");
-
-    imgBackground = loadImage("backgrounds/"+backgroundId[0]+"."+backgroundId[1], () => console.log("Background: " + backgroundId[2] + ", " + backgroundId[3]));
+    imgBackground = loadImage("backgrounds/"+backgroundId[0]+"."+backgroundId[1], () => {console.log("Background: " + backgroundId[2] + ", " + backgroundId[3]); loadCount++});
 }
 
-function setup() {
-    let ratio = imgBase.height/imgBase.width;
-    let W = windowWidth, H = windowHeight;
-    if (W*ratio < H) createCanvas(W, W*ratio);
-    else createCanvas(H/ratio, H);
+function draw() {
+    background(0);
+    frameRate(20);
+    noStroke();
+    fill(255);
+    textAlign(LEFT, CENTER);
+    let fonts = shuffle(["Arial", "Verdana", "Tahoma", "Times New Roman", "Georgia", "Garamond", "Courier New"]);
+    let letters = "Loading".split("");
+    let x = width/2-40;
+    for (let l of letters) {
+        textFont(fonts.pop(), 24);
+        text(l, x, height/2);
+        x += textWidth(l);
+    }
+    //text("Loading...", width/2, height/2);
 
-    pixelDensity(2);
-    noLoop();
+    if (loadCount == 10) {
+        console.log(loadCount)
+        let ratio = imgBase.height/imgBase.width;
+        let W = windowWidth, H = windowHeight;
+        if (W*ratio < H) resizeCanvas(W, W*ratio);
+        else resizeCanvas(H/ratio, H);
+    
+        pixelDensity(2);
+        noLoop();
+    
+        if (imgBase.width < width) imgBase.resize(width, 0);
+        if (imgBase.height < height) imgBase.resize(0, height);
+        if (imgLeftEye.width < width) imgLeftEye.resize(width, 0);
+        if (imgLeftEye.height < height) imgLeftEye.resize(0, height);
+        if (imgRightEye.width < width) imgRightEye.resize(width, 0);
+        if (imgRightEye.height < height) imgRightEye.resize(0, height);
+        if (imgMouth.width < width) imgMouth.resize(width, 0);
+        if (imgMouth.height < height) imgMouth.resize(0, height);
+    
+        imgBackground.resize(0, height);
+    
+        image(imgBackground, random(width-imgBackground.width), 0);
+    
+        drawingContext.shadowOffsetX = 0;
+        drawingContext.shadowOffsetY = 0;
+        drawingContext.shadowBlur = width/100;
+        drawingContext.shadowColor = "#00000095";
+    
+        cutOutline();
+        drawFacialFeatures();
+        hl.token.capturePreview();
+    }
+}
 
-    if (imgBase.width < width) imgBase.resize(width, 0);
-    if (imgBase.height < height) imgBase.resize(0, height);
-    if (imgLeftEye.width < width) imgLeftEye.resize(width, 0);
-    if (imgLeftEye.height < height) imgLeftEye.resize(0, height);
-    if (imgRightEye.width < width) imgRightEye.resize(width, 0);
-    if (imgRightEye.height < height) imgRightEye.resize(0, height);
-    if (imgMouth.width < width) imgMouth.resize(width, 0);
-    if (imgMouth.height < height) imgMouth.resize(0, height);
-
-    imgBackground.resize(0, height);
-
-    image(imgBackground, random(width-imgBackground.width), 0);
-
-    drawingContext.shadowOffsetX = 0;
-    drawingContext.shadowOffsetY = 0;
-    drawingContext.shadowBlur = width/100;
-    drawingContext.shadowColor = "#00000095";
-
-    cutOutline();
-    drawFacialFeatures();
-    hl.token.capturePreview();
+function keyPressed() {
+    if (key == "r") {
+        loadCount = 0;
+        console.clear();
+        loop();
+        setup();
+    }
 }
 
 // BACKGROUND
