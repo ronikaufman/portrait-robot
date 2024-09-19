@@ -4,11 +4,13 @@ Imagine René Descartes with the lips of a Swedish queen, the eyes of two differ
 
 *Portrait Robot* is a parody of current “generative AI” programs that create images from natural language descriptions. Taking the opposite direction, this work places the emphasis on silliness, openness and culture.
 
+![A mosaic of different outputs. At the center, a portrait of René Descartes with the lips of a Swedish queen, the eyes of two different Finnish artists, in front of Mount Fuji.](./hero_banner.png "Example outputs of the algorithm")
+
 ## Combine24, exhibition and sale
 
 *Portrait Robot* was submitted to [Combine24](https://combine24.alusta.art/), a generative art competition by the Finnish National Gallery. It was selected as one of the ten shortlisted artworks and will compete for the competition prizes.  
 
-It will take part in the exhibition in Helsinki from September 26th or October 26th and be on sale on Highlight during the same period.
+It will take part in the exhibition from September 20th or October 26th (Teollisuuskatu 9D, Helsinki) and be on sale on [Highlight](https://highlight.xyz/mint/base:0x217B063b440b4cc14a0893247555a83973D8583b) during the same period.
 
 ## Credits
 
@@ -53,5 +55,3 @@ The selection was carefully made by the artist, browsing the collection website 
 Who is represented in the Finnish National Gallery’s collection, and how? In *Portrait Robot*, monarchs are mixed with mythological figures, scientists, thinkers, artists and their families, anonymous people, etc. In the background, we see landscapes, interiors and architectures from all around the world. Masterpieces are mixed with first studies and unfinished artworks; well-preserved paintings with damaged sketchbook pages.
 
 All in all, this project is a deep exploration and celebration of the collection, from the artworks that are at the center of the exhibitions, to the ones that are not on display or rarely seen by audiences. The result is a sort of facial composite (“portrait-robot” in French) of the Finnish National Gallery’s portraits.
-
-![A portrait of René Descartes with the lips of a Swedish queen, the eyes of two different Finnish artists, in front of Mount Fuji.](/thumbnail.png "Example output of the algorithm")
