@@ -6,11 +6,11 @@ Imagine René Descartes with the lips of a Swedish queen, the eyes of two differ
 
 ![A mosaic of different outputs. At the center, a portrait of René Descartes with the lips of a Swedish queen, the eyes of two different Finnish artists, in front of Mount Fuji.](./hero_banner.png "Example outputs of the algorithm")
 
-## Combine24, exhibition and sale
+## Competition, exhibition and sale
 
 *Portrait Robot* was submitted to [Combine24](https://combine24.alusta.art/), a generative art competition by the Finnish National Gallery. It was selected as one of the ten shortlisted artworks and will compete for the competition prizes.  
 
-It will take part in the exhibition from September 20th or October 26th (Teollisuuskatu 9D, Helsinki) and be on sale on [Highlight](https://highlight.xyz/mint/base:0x217B063b440b4cc14a0893247555a83973D8583b) during the same period.
+It takes part in the [Remix The Archive](https://www.remixthearchive.com/) exhibition from September 20th or October 26th, and is on sale on [Highlight](https://highlight.xyz/mint/base:0x217B063b440b4cc14a0893247555a83973D8583b) during the same period.
 
 ## Credits
 
