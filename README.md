@@ -10,7 +10,7 @@ Imagine René Descartes with the lips of a Swedish queen, the eyes of two differ
 
 *Portrait Robot* was submitted to [Combine24](https://combine24.alusta.art/), a generative art competition by the Finnish National Gallery. It was selected as one of the ten shortlisted artworks and competed for the competition prizes.  
 
-It takes part in the [Remix The Archive](https://www.remixthearchive.com/) exhibition from September 20th to November 23rd, and is on sale on [Highlight](https://highlight.xyz/mint/base:0x217B063b440b4cc14a0893247555a83973D8583b) during the same period.
+It took part in the [Remix The Archive](https://www.remixthearchive.com/) exhibition from September 20th to November 23rd, and was on sale on [Highlight](https://highlight.xyz/mint/base:0x217B063b440b4cc14a0893247555a83973D8583b) during the same period.
 
 ## Credits
 
