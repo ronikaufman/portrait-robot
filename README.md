@@ -6,6 +6,8 @@ Imagine René Descartes with the lips of a Swedish queen, the eyes of two differ
 
 ![A mosaic of different outputs. At the center, a portrait of René Descartes with the lips of a Swedish queen, the eyes of two different Finnish artists, in front of Mount Fuji.](./hero_banner.png "Example outputs of the algorithm")
 
+See the live version [here](https://ronikaufman.github.io/portrait-robot/). Refresh the page or press \[r\] to generate a new portrait. A curated selection of outputs is available in the [output_images](./output_images/) folder.
+
 ## Competition, exhibition and sale
 
 *Portrait Robot* was submitted to [Combine24](https://combine24.alusta.art/), a generative art competition by the Finnish National Gallery. It was selected as one of the ten shortlisted artworks and competed for the competition prizes.  
@@ -41,3 +43,7 @@ Kaufman’s commitment to transparency stands in stark contrast to the often opa
 In selecting the portraits to be included in the dataset, Kaufman ensures a diverse representation of human subjects—ranging from monarchs to anonymous figures, and from mythological characters to everyday people. This diversity is reflected in the resulting artworks, which blend elements from masterpieces with unfinished sketches, and classical portraits with modernist landscapes. Each collage thus becomes a microcosm of the gallery’s extensive collection, showcasing not only the variety of the artworks contained within it but also the collective human history they represent.
 
 *Portrait Robot* does more than generate digital images; it invites viewers to reconsider the value of randomness and human-machine collaboration in the creation of art. By integrating Dadaist principles into digital collage, Kaufman not only critiques the perceived autonomy of generative AI but also celebrates the potential for technology to enrich artistic expression. This project stands as a compelling exploration of identity, technology, and creativity, challenging viewers to engage with art in a dynamically interactive and thoughtful way.
+
+## License
+
+This work is licensed under the [Creative Common Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/) [license](./LICENSE.txt).
