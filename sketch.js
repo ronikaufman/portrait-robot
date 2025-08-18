@@ -1,3 +1,5 @@
+let seed;
+
 let bodyPixBase;
 let faceApiBase;
 let faceApiLeftEye;
@@ -20,8 +22,9 @@ const faceApiOptions = {
 function setup() {
     createCanvas(windowWidth, windowHeight);
 
-    let hlRandomSeed = hl.random(1e12);
-    randomSeed(hlRandomSeed);
+    seed = ~~random(1e9);
+    console.log("Seed: "+seed);
+    randomSeed(seed);
 
     shuffle(portraits_data, true);
     let baseId = portraits_data[0], leftEyeId = portraits_data[1], rightEyeId = portraits_data[2], mouthId = portraits_data[3];
@@ -56,10 +59,8 @@ function draw() {
         text(l, x, height/2);
         x += textWidth(l);
     }
-    //text("Loading...", width/2, height/2);
 
     if (loadCount == 10) {
-        console.log(loadCount)
         let ratio = imgBase.height/imgBase.width;
         let W = windowWidth, H = windowHeight;
         if (W*ratio < H) resizeCanvas(W, W*ratio);
@@ -86,14 +87,26 @@ function draw() {
         drawingContext.shadowBlur = width/100;
         drawingContext.shadowColor = "#00000095";
     
+        push();
         cutOutline();
         drawFacialFeatures();
-        hl.token.capturePreview();
+        pop();
+
+        noStroke();
+        drawingContext.shadowBlur = 0;
+        let seedText = `seed=${seed}`;
+        let h = height/75;
+        textFont("Courier New", h);
+        let w = textWidth(seedText), margin = textWidth(" ")*3/4;
+        fill(0);
+        rect(0, height-(h+2*margin), w+2*margin, h+2*margin);
+        fill(255);
+        text(seedText, margin, height-(h+2*margin)/2);
     }
 }
 
 function keyPressed() {
-    if (key == "r") {
+    if (key == "r" || key == "a") {
         loadCount = 0;
         console.clear();
         loop();
