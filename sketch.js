@@ -16,13 +16,9 @@ const faceApiOptions = {
 }
 
 function preload() {
-    let hlRandomSeed = hl.random(1e12);
-    randomSeed(hlRandomSeed);
+    let baseId = portraits_data[82], leftEyeId = portraits_data[161], rightEyeId = portraits_data[132], mouthId = portraits_data[116];
 
-    shuffle(portraits_data, true);
-    let baseId = portraits_data[0], leftEyeId = portraits_data[1], rightEyeId = portraits_data[2], mouthId = portraits_data[3];
-
-    let backgroundId = random(backgrounds_data);
+    let backgroundId = backgrounds_data[453];
 
     hl.token.setTraits({
         "Base portrait": baseId[2] + ", " + baseId[3],
@@ -48,9 +44,8 @@ function preload() {
 
 function setup() {
     let ratio = imgBase.height/imgBase.width;
-    let W = windowWidth, H = windowHeight;
-    if (W*ratio < H) createCanvas(W, W*ratio);
-    else createCanvas(H/ratio, H);
+    let W = 2000;
+    createCanvas(W, W*ratio);
 
     pixelDensity(2);
     noLoop();
@@ -66,7 +61,7 @@ function setup() {
 
     imgBackground.resize(0, height);
 
-    image(imgBackground, random(width-imgBackground.width), 0);
+    image(imgBackground, -1189, 0);
 
     drawingContext.shadowOffsetX = 0;
     drawingContext.shadowOffsetY = 0;
@@ -98,7 +93,7 @@ function cutOutline() {
 
     translate(width/2, height/2);
     scale(0.95);
-    rotate(random(-1, 1)*0.03);
+    rotate(-0.006);
     translate(-width/2, -height/2);
 
     image(img, 0, 0, width, height);
@@ -107,7 +102,7 @@ function cutOutline() {
 // PORTRAIT
 
 function drawFacialFeatures() {
-    if (random() < 1/2) {
+    if (random() < 0/2) {
         drawLeftEye();
         drawRightEye();
     } else {
