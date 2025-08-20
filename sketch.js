@@ -50,15 +50,9 @@ function draw() {
     frameRate(20);
     noStroke();
     fill(0);
-    textAlign(LEFT, CENTER);
-    let fonts = shuffle(["Arial", "Verdana", "Tahoma", "Times New Roman", "Georgia", "Garamond", "Courier New"]);
-    let letters = "Loading".split("");
-    let x = width/2-40;
-    for (let l of letters) {
-        textFont(fonts.pop(), 24);
-        text(l, x, height/2);
-        x += textWidth(l);
-    }
+    textAlign(CENTER, CENTER);
+    textFont("Courier New", height/50);
+    text("Loading...", width/2, height/2);
 
     if (loadCount == 10) {
         let ratio = imgBase.height/imgBase.width;
@@ -92,16 +86,16 @@ function draw() {
         drawFacialFeatures();
         pop();
 
-        noStroke();
-        drawingContext.shadowBlur = 0;
         let seedText = `seed=${seed}`;
         let h = height/75;
         textFont("Courier New", h);
         let w = textWidth(seedText), margin = textWidth(" ")*3/4;
-        fill(0);
-        rect(0, height-(h+2*margin), w+2*margin, h+2*margin);
-        fill(255);
-        text(seedText, margin, height-(h+2*margin)/2);
+
+        let p = createP(seedText);
+        p.style("font-family", "Courier New");
+        p.style("font-size", h);
+        let wMargin = (windowWidth-width)/2;
+        p.position(wMargin + width - w, height + 3*h + margin);
     }
 }
 
@@ -109,6 +103,7 @@ function keyPressed() {
     if (key == "r" || key == "a") {
         loadCount = 0;
         console.clear();
+        removeElements();
         loop();
         setup();
     }
