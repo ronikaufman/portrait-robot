@@ -87,7 +87,7 @@ function draw() {
         pop();
 
         let seedText = `seed=${seed}`;
-        let h = windowHeight/100;
+        let h = windowHeight/125;
         textFont("Courier New", h);
         let w = textWidth(seedText), margin = textWidth(" ")*3/4;
 
