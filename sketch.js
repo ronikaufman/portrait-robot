@@ -46,10 +46,10 @@ function setup() {
 }
 
 function draw() {
-    background(0);
+    background(255);
     frameRate(20);
     noStroke();
-    fill(255);
+    fill(0);
     textAlign(LEFT, CENTER);
     let fonts = shuffle(["Arial", "Verdana", "Tahoma", "Times New Roman", "Georgia", "Garamond", "Courier New"]);
     let letters = "Loading".split("");
@@ -62,7 +62,7 @@ function draw() {
 
     if (loadCount == 10) {
         let ratio = imgBase.height/imgBase.width;
-        let W = windowWidth, H = windowHeight;
+        let W = windowWidth*0.9, H = windowHeight*0.9;
         if (W*ratio < H) resizeCanvas(W, W*ratio);
         else resizeCanvas(H/ratio, H);
     
