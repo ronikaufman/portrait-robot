@@ -51,7 +51,7 @@ function draw() {
     noStroke();
     fill(0);
     textAlign(CENTER, CENTER);
-    textFont("Courier New", height/50);
+    textFont("Courier New", height/75);
     text("Loading...", width/2, height/2);
 
     if (loadCount == 10) {
@@ -87,7 +87,7 @@ function draw() {
         pop();
 
         let seedText = `seed=${seed}`;
-        let h = height/75;
+        let h = height/100;
         textFont("Courier New", h);
         let w = textWidth(seedText), margin = textWidth(" ")*3/4;
 
@@ -95,7 +95,8 @@ function draw() {
         p.style("font-family", "Courier New");
         p.style("font-size", h);
         let wMargin = (windowWidth-width)/2;
-        p.position(wMargin + width - w, height + 3*h + margin);
+        let hMargin = (windowHeight-height)/2
+        p.position(wMargin + width - w, hMargin + height - h);
     }
 }
 
