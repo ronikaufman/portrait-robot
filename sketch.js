@@ -46,7 +46,7 @@ function setup() {
 }
 
 function draw() {
-    background(255);
+    background("seashell");
     frameRate(20);
     noStroke();
     fill(0);
