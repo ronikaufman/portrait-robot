@@ -21,13 +21,16 @@ const faceApiOptions = {
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
+    initParams();
+}
 
+function initParams() {
     seed = ~~random(1e9);
     console.log("Seed: "+seed);
     randomSeed(seed);
 
-    shuffle(portraits_data, true);
-    let baseId = portraits_data[0], leftEyeId = portraits_data[1], rightEyeId = portraits_data[2], mouthId = portraits_data[3];
+    let suffled_portraits = shuffle(portraits_data);
+    let baseId = suffled_portraits[0], leftEyeId = suffled_portraits[1], rightEyeId = suffled_portraits[2], mouthId = suffled_portraits[3];
 
     let backgroundId = random(backgrounds_data);
 
@@ -106,7 +109,7 @@ function keyPressed() {
         console.clear();
         removeElements();
         loop();
-        setup();
+        initParams();
     }
 }
 
