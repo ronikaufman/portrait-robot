@@ -25,7 +25,9 @@ function setup() {
 }
 
 function initParams() {
-    seed = ~~random(1e9);
+    let params = getURLParams();
+    seed = params.seed;
+    if (seed == undefined) seed = ~~random(1e9);
     console.log("Seed: "+seed);
     randomSeed(seed);
 
@@ -54,7 +56,7 @@ function draw() {
     noStroke();
     fill(0);
     textAlign(CENTER, CENTER);
-    textFont("Courier New", windowHeight/75);
+    textFont("Courier New", max(windowWidth, windowHeight)/75);
     text("Loading...", width/2, height/2);
 
     if (loadCount == 10) {
@@ -79,18 +81,18 @@ function draw() {
     
         image(imgBackground, random(width-imgBackground.width), 0);
     
+        push();
         drawingContext.shadowOffsetX = 0;
         drawingContext.shadowOffsetY = 0;
         drawingContext.shadowBlur = width/100;
         drawingContext.shadowColor = "#00000095";
     
-        push();
         cutOutline();
         drawFacialFeatures();
         pop();
 
         let seedText = `seed=${seed}`;
-        let h = windowHeight/125;
+        let h = max(windowWidth, windowHeight)/125;
         textFont("Courier New", h);
         let w = textWidth(seedText), margin = textWidth(" ")*3/4;
 
