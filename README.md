@@ -6,12 +6,13 @@ Imagine René Descartes with the lips of a Swedish queen, the eyes of two differ
 
 ![A mosaic of different outputs. At the center, a portrait of René Descartes with the lips of a Swedish queen, the eyes of two different Finnish artists, in front of Mount Fuji.](./hero_banner.png "Example outputs of the algorithm")
 
-See the live version [here](https://ronikaufman.github.io/portrait-robot/). Refresh the page or press \[r\] to generate a new portrait. A curated selection of outputs is available in the [output_images](./output_images/) folder.
+See the live version [here](https://ronikaufman.github.io/portrait-robot/). Refresh the page or press \[r\] to generate a new portrait. Open the browser console to see the names of the artworks used in the composition. You can also add the a custom seed as a URL parameter (for example, https://ronikaufman.github.io/portrait-robot/?seed=123456789). A curated selection of outputs is available in the [output_images](./output_images/) folder.
 
 ## Exhibition history  
 
 - [Remix The Archive](https://www.remixthearchive.com/), organized by the Finnish National Gallery, from September 20th to November 23rd 2024 in Helsinki, Finland, and from May 9th to June 21st 2025 in New York City, USA (Dunkunsthalle)
 - [Unframed](https://destructura.com/unframed/), between May and October 2025 in Turin and Silandro, Italy, Tartu, Estonia, Tampere, Finland and Stockholm, Sweden
+- [re:creation](https://rethread.art/projects/recreation/index.html), from August 21st to September 10th in Stockholm, Sweden (Parallel Collective Gallery)
 
 ## Credits
 
