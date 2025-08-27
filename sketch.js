@@ -54,6 +54,7 @@ function draw() {
     background("seashell");
     frameRate(20);
     noStroke();
+    drawingContext.shadowBlur = 0;
     fill(0);
     textAlign(CENTER, CENTER);
     textFont("Courier New", max(windowWidth, windowHeight)/75);
