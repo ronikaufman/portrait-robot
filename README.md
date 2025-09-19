@@ -10,9 +10,12 @@ See the live version [here](https://ronikaufman.github.io/portrait-robot/). Refr
 
 ## Exhibition history  
 
-- [Remix The Archive](https://www.remixthearchive.com/), organized by the Finnish National Gallery, from September 20th to November 23rd 2024 in Helsinki, Finland, and from May 9th to June 21st 2025 in New York City, USA (Dunkunsthalle)
-- [Unframed](https://destructura.com/unframed/), between May and October 2025 in Turin and Silandro, Italy, Tartu, Estonia, Tampere, Finland and Stockholm, Sweden
-- [re:creation](https://rethread.art/projects/recreation/index.html), from August 21st to September 10th in Stockholm, Sweden (Parallel Collective Gallery)
+- [Remix The Archive](https://www.remixthearchive.com/), organized by the Finnish National Gallery, from September 20th to November 23rd 2024 in Helsinki, Finland, and from May 9th to June 21st 2025 in New York City, USA (Dunkunsthalle), as an interactive installation
+- [Unframed](https://destructura.com/unframed/), between May and October 2025 in Turin and Silandro, Italy, Tartu, Estonia, Tampere, Finland and Stockholm, Sweden, in augmented reality (AR)
+- [re:creation](https://rethread.art/projects/recreation/index.html), from August 21st to September 10th in Stockholm, Sweden (Parallel Collective Gallery), as an interactive installation and a framed print
+
+<img src="exhibition_images/RTA_FNG-Photographics-Service.jpg" width="45%"/> <img src="exhibition_images/recreation.JPG" width="45%"/> <br>
+Images from Remix The Archive in Helsinki (credit: Finnish National Gallery’s Photographic Service) and re:creation.
 
 ## Credits
 
